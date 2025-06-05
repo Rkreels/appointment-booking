@@ -1,18 +1,38 @@
-
 import React, { useState } from 'react';
 import { Layout } from '../components/Layout';
-import { Users, Calendar, Clock, Mail, Phone, MapPin, Filter, Search } from 'lucide-react';
+import { Users, Calendar, Clock, Mail, Phone, MapPin, Filter, Search, Plus, Edit, Trash2, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { BookingForm } from '../components/BookingForm';
+import { toast } from '@/hooks/use-toast';
+
+interface Booking {
+  id: number;
+  eventType: string;
+  attendee: {
+    name: string;
+    email: string;
+    phone: string;
+  };
+  date: string;
+  time: string;
+  duration: string;
+  status: string;
+  location: string;
+  notes: string;
+}
 
 const Bookings = () => {
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showForm, setShowForm] = useState(false);
+  const [editingBooking, setEditingBooking] = useState<Booking | undefined>();
 
-  const bookings = [
+  const [bookings, setBookings] = useState<Booking[]>([
     {
       id: 1,
       eventType: '30-min Consultation',
@@ -73,7 +93,7 @@ const Bookings = () => {
       location: 'Phone Call',
       notes: 'Follow-up on proposal'
     }
-  ];
+  ]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -94,10 +114,77 @@ const Bookings = () => {
     return matchesFilter && matchesSearch;
   });
 
+  const handleSaveBooking = (bookingData: Booking) => {
+    if (editingBooking) {
+      // Update existing booking
+      setBookings(prev => prev.map(booking => 
+        booking.id === editingBooking.id ? { ...bookingData, id: editingBooking.id } : booking
+      ));
+      toast({
+        title: "Booking Updated",
+        description: `Booking for ${bookingData.attendee.name} has been updated.`,
+      });
+    } else {
+      // Create new booking
+      const newBooking = {
+        ...bookingData,
+        id: Math.max(...bookings.map(b => b.id)) + 1
+      };
+      setBookings(prev => [...prev, newBooking]);
+      toast({
+        title: "Booking Created",
+        description: `New booking for ${bookingData.attendee.name} has been created.`,
+      });
+    }
+    setShowForm(false);
+    setEditingBooking(undefined);
+  };
+
+  const handleEditBooking = (booking: Booking) => {
+    setEditingBooking(booking);
+    setShowForm(true);
+  };
+
+  const handleDeleteBooking = (bookingId: number) => {
+    const booking = bookings.find(b => b.id === bookingId);
+    if (booking && window.confirm(`Are you sure you want to delete the booking for ${booking.attendee.name}?`)) {
+      setBookings(prev => prev.filter(b => b.id !== bookingId));
+      toast({
+        title: "Booking Deleted",
+        description: `Booking for ${booking.attendee.name} has been deleted.`,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleStatusChange = (bookingId: number, newStatus: string) => {
+    setBookings(prev => prev.map(booking => 
+      booking.id === bookingId ? { ...booking, status: newStatus } : booking
+    ));
+    const booking = bookings.find(b => b.id === bookingId);
+    if (booking) {
+      toast({
+        title: "Status Updated",
+        description: `Booking for ${booking.attendee.name} is now ${newStatus}.`,
+      });
+    }
+  };
+
+  const getStatusCounts = () => {
+    return {
+      today: bookings.filter(b => b.date === new Date().toISOString().split('T')[0]).length,
+      week: 45, // Mock data
+      month: 168, // Mock data
+      pending: bookings.filter(b => b.status === 'pending').length
+    };
+  };
+
+  const statusCounts = getStatusCounts();
+
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center space-x-4">
             <Users className="h-8 w-8 text-blue-600" />
             <div>
@@ -105,6 +192,15 @@ const Bookings = () => {
               <p className="text-gray-600">Manage all your scheduled appointments</p>
             </div>
           </div>
+          
+          <Button 
+            data-action="new-booking"
+            className="flex items-center space-x-2"
+            onClick={() => setShowForm(true)}
+          >
+            <Plus className="h-4 w-4" />
+            <span>New Booking</span>
+          </Button>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4">
@@ -140,7 +236,7 @@ const Bookings = () => {
               <Card>
                 <CardContent className="p-4">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600">12</div>
+                    <div className="text-2xl font-bold text-blue-600">{statusCounts.today}</div>
                     <div className="text-sm text-gray-600">Today</div>
                   </div>
                 </CardContent>
@@ -148,7 +244,7 @@ const Bookings = () => {
               <Card>
                 <CardContent className="p-4">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">45</div>
+                    <div className="text-2xl font-bold text-green-600">{statusCounts.week}</div>
                     <div className="text-sm text-gray-600">This Week</div>
                   </div>
                 </CardContent>
@@ -156,7 +252,7 @@ const Bookings = () => {
               <Card>
                 <CardContent className="p-4">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-600">168</div>
+                    <div className="text-2xl font-bold text-purple-600">{statusCounts.month}</div>
                     <div className="text-sm text-gray-600">This Month</div>
                   </div>
                 </CardContent>
@@ -164,7 +260,7 @@ const Bookings = () => {
               <Card>
                 <CardContent className="p-4">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-orange-600">3</div>
+                    <div className="text-2xl font-bold text-orange-600">{statusCounts.pending}</div>
                     <div className="text-sm text-gray-600">Pending</div>
                   </div>
                 </CardContent>
@@ -179,41 +275,72 @@ const Bookings = () => {
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between">
                       <div className="flex-1 space-y-3">
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                           <h3 className="text-lg font-semibold text-gray-900">{booking.eventType}</h3>
-                          <Badge className={getStatusColor(booking.status)}>
-                            {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-                          </Badge>
+                          <div className="flex items-center space-x-2">
+                            <Badge className={getStatusColor(booking.status)}>
+                              {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                            </Badge>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleEditBooking(booking)}>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleStatusChange(booking.id, 'confirmed')}>
+                                  Confirm
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleStatusChange(booking.id, 'completed')}>
+                                  Mark Complete
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleStatusChange(booking.id, 'cancelled')}>
+                                  Cancel
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={() => handleDeleteBooking(booking.id)}
+                                  className="text-red-600"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
                         </div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <div className="flex items-center text-sm text-gray-600">
-                              <Users className="h-4 w-4 mr-2" />
-                              {booking.attendee.name}
+                              <Users className="h-4 w-4 mr-2 flex-shrink-0" />
+                              <span className="truncate">{booking.attendee.name}</span>
                             </div>
                             <div className="flex items-center text-sm text-gray-600">
-                              <Mail className="h-4 w-4 mr-2" />
-                              {booking.attendee.email}
+                              <Mail className="h-4 w-4 mr-2 flex-shrink-0" />
+                              <span className="truncate">{booking.attendee.email}</span>
                             </div>
                             <div className="flex items-center text-sm text-gray-600">
-                              <Phone className="h-4 w-4 mr-2" />
-                              {booking.attendee.phone}
+                              <Phone className="h-4 w-4 mr-2 flex-shrink-0" />
+                              <span>{booking.attendee.phone}</span>
                             </div>
                           </div>
                           
                           <div className="space-y-2">
                             <div className="flex items-center text-sm text-gray-600">
-                              <Calendar className="h-4 w-4 mr-2" />
-                              {booking.date}
+                              <Calendar className="h-4 w-4 mr-2 flex-shrink-0" />
+                              <span>{booking.date}</span>
                             </div>
                             <div className="flex items-center text-sm text-gray-600">
-                              <Clock className="h-4 w-4 mr-2" />
-                              {booking.time} ({booking.duration})
+                              <Clock className="h-4 w-4 mr-2 flex-shrink-0" />
+                              <span>{booking.time} ({booking.duration})</span>
                             </div>
                             <div className="flex items-center text-sm text-gray-600">
-                              <MapPin className="h-4 w-4 mr-2" />
-                              {booking.location}
+                              <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />
+                              <span className="truncate">{booking.location}</span>
                             </div>
                           </div>
                         </div>
@@ -225,25 +352,36 @@ const Bookings = () => {
                         )}
                       </div>
                     </div>
-                    
-                    <div className="mt-4 flex justify-end space-x-2">
-                      <Button variant="outline" size="sm">
-                        Reschedule
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        Cancel
-                      </Button>
-                      <Button size="sm">
-                        Contact
-                      </Button>
-                    </div>
                   </CardContent>
                 </Card>
               ))}
+              
+              {filteredBookings.length === 0 && (
+                <Card>
+                  <CardContent className="p-12 text-center">
+                    <div className="text-gray-500">
+                      <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <h3 className="text-lg font-medium mb-2">No bookings found</h3>
+                      <p className="text-sm">Try adjusting your search or filters, or create a new booking.</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {showForm && (
+        <BookingForm
+          booking={editingBooking}
+          onSave={handleSaveBooking}
+          onCancel={() => {
+            setShowForm(false);
+            setEditingBooking(undefined);
+          }}
+        />
+      )}
     </Layout>
   );
 };

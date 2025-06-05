@@ -1,37 +1,25 @@
 
 import React from 'react';
-import { Bell, Settings, User, Mic, Volume2 } from 'lucide-react';
+import { Bell, Settings, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 
 export const Header: React.FC = () => {
-  const [voiceMode, setVoiceMode] = React.useState(false);
-
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
+    <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-4 shadow-sm">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <h1 className="text-2xl font-bold text-gray-900">VoiceCal</h1>
-          <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">VoiceCal</h1>
+          <Badge variant="secondary" className="bg-blue-100 text-blue-800 hidden sm:inline-flex">
             Voice-Guided Scheduling
           </Badge>
         </div>
         
-        <div className="flex items-center space-x-4">
-          <Button
-            variant={voiceMode ? "default" : "outline"}
-            size="sm"
-            onClick={() => setVoiceMode(!voiceMode)}
-            className="flex items-center space-x-2"
-            aria-label="Toggle voice guidance mode"
-          >
-            {voiceMode ? <Volume2 className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-            <span>{voiceMode ? 'Voice On' : 'Voice Off'}</span>
-          </Button>
-          
-          <Button variant="ghost" size="sm" aria-label="Notifications">
+        <div className="flex items-center space-x-2 sm:space-x-4">
+          <Button variant="ghost" size="sm" aria-label="Notifications" className="relative">
             <Bell className="h-5 w-5" />
+            <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full text-xs"></span>
           </Button>
           
           <Button variant="ghost" size="sm" aria-label="Settings">

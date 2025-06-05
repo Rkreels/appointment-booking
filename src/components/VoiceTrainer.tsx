@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Volume2, VolumeX, Play, Pause, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,7 +10,7 @@ interface TrainingAction {
 }
 
 export const VoiceTrainer: React.FC = () => {
-  const [isActive, setIsActive] = useState(false);
+  const [isActive, setIsActive] = useState(false); // Default off
   const [isPlaying, setIsPlaying] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
   const [currentAction, setCurrentAction] = useState<string | null>(null);
@@ -79,7 +78,6 @@ export const VoiceTrainer: React.FC = () => {
       }
     };
 
-    // Add event listeners for training
     document.addEventListener('mouseover', handleElementInteraction);
     document.addEventListener('focus', handleElementInteraction, true);
 
@@ -143,7 +141,7 @@ export const VoiceTrainer: React.FC = () => {
         className="flex items-center space-x-2 shadow-lg"
       >
         {isActive ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
-        <span>{isActive ? 'Voice On' : 'Voice Off'}</span>
+        <span className="hidden sm:inline">{isActive ? 'Voice On' : 'Voice Off'}</span>
       </Button>
       
       {isActive && (
@@ -153,6 +151,7 @@ export const VoiceTrainer: React.FC = () => {
             variant="outline"
             size="sm"
             aria-label={isPlaying ? 'Stop speech' : 'Play instructions'}
+            className="hidden sm:flex"
           >
             {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
           </Button>
@@ -162,6 +161,7 @@ export const VoiceTrainer: React.FC = () => {
             variant="outline"
             size="sm"
             aria-label="Reset training"
+            className="hidden sm:flex"
           >
             <RotateCcw className="h-4 w-4" />
           </Button>
