@@ -1,16 +1,17 @@
+
 import React, { useState, useEffect } from 'react';
-import { Volume2, VolumeX, Play, Pause, RotateCcw } from 'lucide-react';
+import { Volume2, VolumeX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface TrainingAction {
   id: string;
   element: string;
   instruction: string;
-  trigger: 'click' | 'hover' | 'focus';
+  trigger: 'hover' | 'focus';
 }
 
 export const VoiceTrainer: React.FC = () => {
-  const [isActive, setIsActive] = useState(false); // Default off
+  const [isActive, setIsActive] = useState(true); // Always on by default
   const [isPlaying, setIsPlaying] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
   const [currentAction, setCurrentAction] = useState<string | null>(null);
@@ -51,6 +52,36 @@ export const VoiceTrainer: React.FC = () => {
       element: '[data-action="analytics"]',
       instruction: 'View detailed analytics about your scheduling patterns, popular time slots, and booking trends.',
       trigger: 'hover'
+    },
+    {
+      id: 'settings-link',
+      element: '[data-action="settings"]',
+      instruction: 'Configure your account settings, availability, and preferences.',
+      trigger: 'hover'
+    },
+    {
+      id: 'edit-event',
+      element: '[data-action="edit-event"]',
+      instruction: 'Click to edit this event type. You can modify the duration, description, and availability settings.',
+      trigger: 'hover'
+    },
+    {
+      id: 'delete-event',
+      element: '[data-action="delete-event"]',
+      instruction: 'Click to delete this event type. This action cannot be undone.',
+      trigger: 'hover'
+    },
+    {
+      id: 'view-booking',
+      element: '[data-action="view-booking"]',
+      instruction: 'Click to view detailed information about this booking.',
+      trigger: 'hover'
+    },
+    {
+      id: 'cancel-booking',
+      element: '[data-action="cancel-booking"]',
+      instruction: 'Click to cancel this booking. The attendee will be notified automatically.',
+      trigger: 'hover'
     }
   ];
 
@@ -72,17 +103,28 @@ export const VoiceTrainer: React.FC = () => {
         const action = trainingActions.find(a => a.element.includes(actionId!));
         
         if (action && action.id !== currentAction) {
+          // Stop any existing speech immediately
+          window.speechSynthesis.cancel();
           setCurrentAction(action.id);
           speak(action.instruction);
         }
       }
     };
 
+    const handleMouseLeave = () => {
+      // Stop speech when mouse leaves the element
+      window.speechSynthesis.cancel();
+      setIsPlaying(false);
+      setCurrentAction(null);
+    };
+
     document.addEventListener('mouseover', handleElementInteraction);
+    document.addEventListener('mouseleave', handleMouseLeave);
     document.addEventListener('focus', handleElementInteraction, true);
 
     return () => {
       document.removeEventListener('mouseover', handleElementInteraction);
+      document.removeEventListener('mouseleave', handleMouseLeave);
       document.removeEventListener('focus', handleElementInteraction, true);
     };
   }, [isActive, speechSupported, currentAction]);
@@ -90,41 +132,43 @@ export const VoiceTrainer: React.FC = () => {
   const speak = (text: string) => {
     if (!speechSupported) return;
     
+    // Always cancel existing speech before starting new one
     window.speechSynthesis.cancel();
     
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 0.9;
-    utterance.pitch = 1;
-    utterance.volume = 0.8;
-    
-    utterance.onstart = () => setIsPlaying(true);
-    utterance.onend = () => setIsPlaying(false);
-    utterance.onerror = () => setIsPlaying(false);
-    
-    window.speechSynthesis.speak(utterance);
+    // Small delay to ensure previous speech is stopped
+    setTimeout(() => {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.9;
+      utterance.pitch = 1;
+      utterance.volume = 0.8;
+      
+      utterance.onstart = () => setIsPlaying(true);
+      utterance.onend = () => {
+        setIsPlaying(false);
+        setCurrentAction(null);
+      };
+      utterance.onerror = () => {
+        setIsPlaying(false);
+        setCurrentAction(null);
+      };
+      
+      window.speechSynthesis.speak(utterance);
+    }, 50);
   };
 
   const stopSpeech = () => {
     window.speechSynthesis.cancel();
     setIsPlaying(false);
+    setCurrentAction(null);
   };
 
   const toggleTraining = () => {
     if (isActive) {
       stopSpeech();
       setIsActive(false);
-      setCurrentAction(null);
     } else {
       setIsActive(true);
       speak('Voice training activated. Hover over any element to hear instructions about how to use it.');
-    }
-  };
-
-  const resetTraining = () => {
-    stopSpeech();
-    setCurrentAction(null);
-    if (isActive) {
-      speak('Training reset. Continue hovering over elements to learn about VoiceCal features.');
     }
   };
 
@@ -133,7 +177,7 @@ export const VoiceTrainer: React.FC = () => {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex items-center space-x-2">
+    <div className="fixed bottom-4 right-4 z-50">
       <Button
         onClick={toggleTraining}
         variant={isActive ? "default" : "outline"}
@@ -143,30 +187,6 @@ export const VoiceTrainer: React.FC = () => {
         {isActive ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
         <span className="hidden sm:inline">{isActive ? 'Voice On' : 'Voice Off'}</span>
       </Button>
-      
-      {isActive && (
-        <>
-          <Button
-            onClick={isPlaying ? stopSpeech : () => speak('Voice training is active. Hover over elements to learn about them.')}
-            variant="outline"
-            size="sm"
-            aria-label={isPlaying ? 'Stop speech' : 'Play instructions'}
-            className="hidden sm:flex"
-          >
-            {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-          </Button>
-          
-          <Button
-            onClick={resetTraining}
-            variant="outline"
-            size="sm"
-            aria-label="Reset training"
-            className="hidden sm:flex"
-          >
-            <RotateCcw className="h-4 w-4" />
-          </Button>
-        </>
-      )}
     </div>
   );
 };

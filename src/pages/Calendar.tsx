@@ -1,16 +1,22 @@
 
 import React, { useState } from 'react';
 import { Layout } from '../components/Layout';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Clock, MapPin, User } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Clock, MapPin, User, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
 
-  const events = [
+  const [events, setEvents] = useState([
     {
       id: 1,
       title: '30-min Consultation',
@@ -19,7 +25,8 @@ const Calendar = () => {
       attendee: 'John Doe',
       type: 'Meeting',
       location: 'Zoom',
-      date: new Date()
+      date: new Date(),
+      description: 'Initial consultation meeting'
     },
     {
       id: 2,
@@ -29,9 +36,10 @@ const Calendar = () => {
       attendee: 'Sarah Wilson',
       type: 'Group Meeting',
       location: 'Conference Room A',
-      date: new Date()
+      date: new Date(),
+      description: 'Weekly team synchronization'
     }
-  ];
+  ]);
 
   const navigateMonth = (direction: 'prev' | 'next') => {
     const newDate = new Date(currentDate);
@@ -49,12 +57,10 @@ const Calendar = () => {
 
     const days = [];
     
-    // Add empty cells for days before the first day of the month
     for (let i = 0; i < startingDayOfWeek; i++) {
       days.push(null);
     }
     
-    // Add days of the month
     for (let day = 1; day <= daysInMonth; day++) {
       days.push(day);
     }
@@ -62,24 +68,50 @@ const Calendar = () => {
     return days;
   };
 
+  const getEventsForDate = (day: number) => {
+    return events.filter(event => {
+      const eventDate = new Date(event.date);
+      return eventDate.getDate() === day && 
+             eventDate.getMonth() === currentDate.getMonth() &&
+             eventDate.getFullYear() === currentDate.getFullYear();
+    });
+  };
+
+  const handleDateClick = (day: number) => {
+    const clickedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+    setSelectedDate(clickedDate);
+    setIsEventDialogOpen(true);
+  };
+
+  const addEvent = (eventData: any) => {
+    const newEvent = {
+      id: events.length + 1,
+      ...eventData,
+      date: selectedDate || new Date()
+    };
+    setEvents([...events, newEvent]);
+    setIsEventDialogOpen(false);
+  };
+
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center space-x-4">
             <CalendarIcon className="h-8 w-8 text-blue-600" />
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Calendar</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Calendar</h1>
               <p className="text-gray-600">Manage your scheduled events</p>
             </div>
           </div>
           
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
             <div className="flex items-center space-x-2">
               <Button
                 variant={viewMode === 'month' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setViewMode('month')}
+                data-action="calendar-month-view"
               >
                 Month
               </Button>
@@ -87,6 +119,7 @@ const Calendar = () => {
                 variant={viewMode === 'week' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setViewMode('week')}
+                data-action="calendar-week-view"
               >
                 Week
               </Button>
@@ -94,6 +127,7 @@ const Calendar = () => {
                 variant={viewMode === 'day' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setViewMode('day')}
+                data-action="calendar-day-view"
               >
                 Day
               </Button>
@@ -106,17 +140,32 @@ const Calendar = () => {
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-xl">
+                  <CardTitle className="text-lg sm:text-xl">
                     {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                   </CardTitle>
                   <div className="flex items-center space-x-2">
-                    <Button variant="outline" size="sm" onClick={() => navigateMonth('prev')}>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => navigateMonth('prev')}
+                      data-action="calendar-prev-month"
+                    >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => setCurrentDate(new Date())}>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setCurrentDate(new Date())}
+                      data-action="calendar-today"
+                    >
                       Today
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => navigateMonth('next')}>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => navigateMonth('next')}
+                      data-action="calendar-next-month"
+                    >
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
@@ -131,28 +180,43 @@ const Calendar = () => {
                   ))}
                 </div>
                 <div className="grid grid-cols-7 gap-1">
-                  {getDaysInMonth().map((day, index) => (
-                    <div
-                      key={index}
-                      className={`p-3 text-center border rounded cursor-pointer hover:bg-gray-50 ${
-                        day === new Date().getDate() && 
-                        currentDate.getMonth() === new Date().getMonth() &&
-                        currentDate.getFullYear() === new Date().getFullYear()
-                          ? 'bg-blue-100 border-blue-300' : 'border-gray-200'
-                      }`}
-                    >
-                      {day && (
-                        <div>
-                          <span className="text-sm">{day}</span>
-                          {day === new Date().getDate() && events.length > 0 && (
-                            <div className="mt-1">
-                              <div className="w-2 h-2 bg-blue-600 rounded-full mx-auto"></div>
+                  {getDaysInMonth().map((day, index) => {
+                    const dayEvents = day ? getEventsForDate(day) : [];
+                    const isToday = day === new Date().getDate() && 
+                      currentDate.getMonth() === new Date().getMonth() &&
+                      currentDate.getFullYear() === new Date().getFullYear();
+                    
+                    return (
+                      <div
+                        key={index}
+                        className={`p-2 sm:p-3 text-center border rounded cursor-pointer hover:bg-gray-50 min-h-[60px] sm:min-h-[80px] ${
+                          isToday ? 'bg-blue-100 border-blue-300' : 'border-gray-200'
+                        }`}
+                        onClick={() => day && handleDateClick(day)}
+                        data-action="calendar-select-date"
+                      >
+                        {day && (
+                          <div className="h-full flex flex-col">
+                            <span className="text-xs sm:text-sm font-medium">{day}</span>
+                            <div className="flex-1 mt-1 space-y-1">
+                              {dayEvents.slice(0, 2).map((event, idx) => (
+                                <div
+                                  key={idx}
+                                  className="w-full h-1 sm:h-2 bg-blue-600 rounded text-xs text-white overflow-hidden"
+                                  title={event.title}
+                                >
+                                  <span className="hidden sm:inline text-xs px-1">{event.title.substring(0, 8)}</span>
+                                </div>
+                              ))}
+                              {dayEvents.length > 2 && (
+                                <div className="text-xs text-gray-500">+{dayEvents.length - 2} more</div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
@@ -160,34 +224,45 @@ const Calendar = () => {
 
           <div className="space-y-6">
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-lg">Today's Events</CardTitle>
+                <Button 
+                  size="sm" 
+                  onClick={() => setIsEventDialogOpen(true)}
+                  data-action="add-calendar-event"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
               </CardHeader>
               <CardContent className="space-y-4">
-                {events.map((event) => (
-                  <div key={event.id} className="p-3 border rounded-lg">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-900">{event.title}</h4>
-                        <div className="mt-1 space-y-1">
-                          <div className="flex items-center text-sm text-gray-600">
-                            <Clock className="h-4 w-4 mr-1" />
-                            {event.time} ({event.duration})
-                          </div>
-                          <div className="flex items-center text-sm text-gray-600">
-                            <User className="h-4 w-4 mr-1" />
-                            {event.attendee}
-                          </div>
-                          <div className="flex items-center text-sm text-gray-600">
-                            <MapPin className="h-4 w-4 mr-1" />
-                            {event.location}
+                {events.length === 0 ? (
+                  <p className="text-gray-500 text-sm">No events scheduled for today</p>
+                ) : (
+                  events.map((event) => (
+                    <div key={event.id} className="p-3 border rounded-lg">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-gray-900 truncate">{event.title}</h4>
+                          <div className="mt-1 space-y-1">
+                            <div className="flex items-center text-sm text-gray-600">
+                              <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
+                              <span className="truncate">{event.time} ({event.duration})</span>
+                            </div>
+                            <div className="flex items-center text-sm text-gray-600">
+                              <User className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
+                              <span className="truncate">{event.attendee}</span>
+                            </div>
+                            <div className="flex items-center text-sm text-gray-600">
+                              <MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
+                              <span className="truncate">{event.location}</span>
+                            </div>
                           </div>
                         </div>
+                        <Badge variant="secondary" className="ml-2 flex-shrink-0">{event.type}</Badge>
                       </div>
-                      <Badge variant="secondary">{event.type}</Badge>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </CardContent>
             </Card>
 
@@ -212,6 +287,64 @@ const Calendar = () => {
             </Card>
           </div>
         </div>
+
+        <Dialog open={isEventDialogOpen} onOpenChange={setIsEventDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Add New Event</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              addEvent({
+                title: formData.get('title'),
+                time: formData.get('time'),
+                duration: formData.get('duration'),
+                attendee: formData.get('attendee'),
+                location: formData.get('location'),
+                type: formData.get('type'),
+                description: formData.get('description')
+              });
+            }} className="space-y-4">
+              <div>
+                <Label htmlFor="title">Event Title</Label>
+                <Input id="title" name="title" required />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="time">Time</Label>
+                  <Input id="time" name="time" type="time" required />
+                </div>
+                <div>
+                  <Label htmlFor="duration">Duration</Label>
+                  <Input id="duration" name="duration" placeholder="30 min" required />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="attendee">Attendee</Label>
+                <Input id="attendee" name="attendee" required />
+              </div>
+              <div>
+                <Label htmlFor="location">Location</Label>
+                <Input id="location" name="location" required />
+              </div>
+              <div>
+                <Label htmlFor="type">Type</Label>
+                <Input id="type" name="type" defaultValue="Meeting" required />
+              </div>
+              <div>
+                <Label htmlFor="description">Description</Label>
+                <Textarea id="description" name="description" />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button type="button" variant="outline" onClick={() => setIsEventDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit">Add Event</Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );

@@ -1,18 +1,59 @@
 
 import React, { useState } from 'react';
 import { Layout } from '../components/Layout';
-import { Settings as SettingsIcon, User, Calendar, Bell, Shield, Palette, Globe } from 'lucide-react';
+import { Settings as SettingsIcon, User, Bell, Calendar, Shield, Palette, Globe, Zap } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Separator } from '@/components/ui/separator';
 
 const Settings = () => {
-  const [activeTab, setActiveTab] = useState('profile');
+  const [profile, setProfile] = useState({
+    name: 'John Doe',
+    email: 'john@example.com',
+    bio: 'Professional consultant helping businesses grow.',
+    company: 'VoiceCal Inc.',
+    website: 'https://voicecal.com',
+    timezone: 'America/New_York'
+  });
+
+  const [notifications, setNotifications] = useState({
+    email: true,
+    sms: false,
+    push: true,
+    booking: true,
+    cancellation: true,
+    reminder: true
+  });
+
+  const [availability, setAvailability] = useState({
+    workingHours: {
+      start: '09:00',
+      end: '17:00'
+    },
+    workingDays: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
+    bufferTime: '15',
+    maxDailyBookings: '8'
+  });
+
+  const handleProfileUpdate = (field: string, value: string) => {
+    setProfile(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleNotificationToggle = (setting: string) => {
+    setNotifications(prev => ({ ...prev, [setting]: !prev[setting as keyof typeof prev] }));
+  };
+
+  const saveSettings = () => {
+    // Mock save functionality
+    console.log('Settings saved:', { profile, notifications, availability });
+    // In a real app, this would make an API call
+  };
 
   return (
     <Layout>
@@ -20,286 +61,324 @@ const Settings = () => {
         <div className="flex items-center space-x-4">
           <SettingsIcon className="h-8 w-8 text-blue-600" />
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Settings</h1>
             <p className="text-gray-600">Manage your account and preferences</p>
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="profile" className="flex items-center space-x-2">
+        <Tabs defaultValue="profile" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-6">
+            <TabsTrigger value="profile" className="flex items-center gap-2" data-action="settings-profile">
               <User className="h-4 w-4" />
-              <span>Profile</span>
+              <span className="hidden sm:inline">Profile</span>
             </TabsTrigger>
-            <TabsTrigger value="calendar" className="flex items-center space-x-2">
-              <Calendar className="h-4 w-4" />
-              <span>Calendar</span>
-            </TabsTrigger>
-            <TabsTrigger value="notifications" className="flex items-center space-x-2">
+            <TabsTrigger value="notifications" className="flex items-center gap-2" data-action="settings-notifications">
               <Bell className="h-4 w-4" />
-              <span>Notifications</span>
+              <span className="hidden sm:inline">Notifications</span>
             </TabsTrigger>
-            <TabsTrigger value="security" className="flex items-center space-x-2">
+            <TabsTrigger value="availability" className="flex items-center gap-2" data-action="settings-availability">
+              <Calendar className="h-4 w-4" />
+              <span className="hidden sm:inline">Availability</span>
+            </TabsTrigger>
+            <TabsTrigger value="security" className="flex items-center gap-2" data-action="settings-security">
               <Shield className="h-4 w-4" />
-              <span>Security</span>
+              <span className="hidden sm:inline">Security</span>
             </TabsTrigger>
-            <TabsTrigger value="appearance" className="flex items-center space-x-2">
+            <TabsTrigger value="appearance" className="flex items-center gap-2" data-action="settings-appearance">
               <Palette className="h-4 w-4" />
-              <span>Appearance</span>
+              <span className="hidden sm:inline">Appearance</span>
             </TabsTrigger>
-            <TabsTrigger value="integrations" className="flex items-center space-x-2">
-              <Globe className="h-4 w-4" />
-              <span>Integrations</span>
+            <TabsTrigger value="integrations" className="flex items-center gap-2" data-action="settings-integrations">
+              <Zap className="h-4 w-4" />
+              <span className="hidden sm:inline">Integrations</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="profile">
+          <TabsContent value="profile" className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Profile Information</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name</Label>
-                    <Input id="firstName" defaultValue="John" />
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="name">Full Name</Label>
+                    <Input
+                      id="name"
+                      value={profile.name}
+                      onChange={(e) => handleProfileUpdate('name', e.target.value)}
+                      data-action="update-profile-name"
+                    />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name</Label>
-                    <Input id="lastName" defaultValue="Doe" />
+                  <div>
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={profile.email}
+                      onChange={(e) => handleProfileUpdate('email', e.target.value)}
+                      data-action="update-profile-email"
+                    />
                   </div>
                 </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input id="email" type="email" defaultValue="john@example.com" />
+                <div>
+                  <Label htmlFor="bio">Bio</Label>
+                  <Textarea
+                    id="bio"
+                    value={profile.bio}
+                    onChange={(e) => handleProfileUpdate('bio', e.target.value)}
+                    data-action="update-profile-bio"
+                  />
                 </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input id="phone" type="tel" defaultValue="+1 (555) 123-4567" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="company">Company</Label>
+                    <Input
+                      id="company"
+                      value={profile.company}
+                      onChange={(e) => handleProfileUpdate('company', e.target.value)}
+                      data-action="update-profile-company"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="website">Website</Label>
+                    <Input
+                      id="website"
+                      value={profile.website}
+                      onChange={(e) => handleProfileUpdate('website', e.target.value)}
+                      data-action="update-profile-website"
+                    />
+                  </div>
                 </div>
-                
-                <div className="space-y-2">
+                <div>
                   <Label htmlFor="timezone">Timezone</Label>
-                  <Select defaultValue="america/new_york">
-                    <SelectTrigger>
+                  <Select value={profile.timezone} onValueChange={(value) => handleProfileUpdate('timezone', value)}>
+                    <SelectTrigger data-action="update-timezone">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="america/new_york">Eastern Time (ET)</SelectItem>
-                      <SelectItem value="america/chicago">Central Time (CT)</SelectItem>
-                      <SelectItem value="america/denver">Mountain Time (MT)</SelectItem>
-                      <SelectItem value="america/los_angeles">Pacific Time (PT)</SelectItem>
+                      <SelectItem value="America/New_York">Eastern Time</SelectItem>
+                      <SelectItem value="America/Chicago">Central Time</SelectItem>
+                      <SelectItem value="America/Denver">Mountain Time</SelectItem>
+                      <SelectItem value="America/Los_Angeles">Pacific Time</SelectItem>
+                      <SelectItem value="Europe/London">London</SelectItem>
+                      <SelectItem value="Europe/Paris">Paris</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="bio">Bio</Label>
-                  <Textarea 
-                    id="bio" 
-                    placeholder="Tell others about yourself..."
-                    defaultValue="Experienced consultant helping businesses grow through strategic planning and execution."
-                  />
-                </div>
-                
-                <Button>Save Changes</Button>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="calendar">
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Working Hours</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label>Start Time</Label>
-                      <Select defaultValue="09:00">
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="08:00">8:00 AM</SelectItem>
-                          <SelectItem value="09:00">9:00 AM</SelectItem>
-                          <SelectItem value="10:00">10:00 AM</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>End Time</Label>
-                      <Select defaultValue="17:00">
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="16:00">4:00 PM</SelectItem>
-                          <SelectItem value="17:00">5:00 PM</SelectItem>
-                          <SelectItem value="18:00">6:00 PM</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <Label>Working Days</Label>
-                    <div className="grid grid-cols-7 gap-2">
-                      {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-                        <div key={day} className="flex items-center space-x-2">
-                          <Switch defaultChecked={!['Sat', 'Sun'].includes(day)} />
-                          <Label>{day}</Label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <Button>Update Working Hours</Button>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Buffer Times</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Before meetings</Label>
-                    <Select defaultValue="15">
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="0">No buffer</SelectItem>
-                        <SelectItem value="15">15 minutes</SelectItem>
-                        <SelectItem value="30">30 minutes</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>After meetings</Label>
-                    <Select defaultValue="15">
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="0">No buffer</SelectItem>
-                        <SelectItem value="15">15 minutes</SelectItem>
-                        <SelectItem value="30">30 minutes</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <Button>Save Buffer Settings</Button>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="notifications">
+          <TabsContent value="notifications" className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Notification Preferences</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Email notifications</Label>
-                      <p className="text-sm text-gray-600">Receive booking confirmations and reminders via email</p>
+                <div>
+                  <h3 className="text-lg font-medium mb-4">Notification Channels</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-base">Email Notifications</Label>
+                        <p className="text-sm text-gray-600">Receive notifications via email</p>
+                      </div>
+                      <Switch
+                        checked={notifications.email}
+                        onCheckedChange={() => handleNotificationToggle('email')}
+                        data-action="toggle-email-notifications"
+                      />
                     </div>
-                    <Switch defaultChecked />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>SMS notifications</Label>
-                      <p className="text-sm text-gray-600">Get text messages for urgent updates</p>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-base">SMS Notifications</Label>
+                        <p className="text-sm text-gray-600">Receive notifications via SMS</p>
+                      </div>
+                      <Switch
+                        checked={notifications.sms}
+                        onCheckedChange={() => handleNotificationToggle('sms')}
+                        data-action="toggle-sms-notifications"
+                      />
                     </div>
-                    <Switch />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Calendar sync</Label>
-                      <p className="text-sm text-gray-600">Automatically add bookings to your calendar</p>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-base">Push Notifications</Label>
+                        <p className="text-sm text-gray-600">Receive browser push notifications</p>
+                      </div>
+                      <Switch
+                        checked={notifications.push}
+                        onCheckedChange={() => handleNotificationToggle('push')}
+                        data-action="toggle-push-notifications"
+                      />
                     </div>
-                    <Switch defaultChecked />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Marketing emails</Label>
-                      <p className="text-sm text-gray-600">Receive tips and feature updates</p>
-                    </div>
-                    <Switch />
                   </div>
                 </div>
-                
-                <Button>Save Preferences</Button>
+
+                <Separator />
+
+                <div>
+                  <h3 className="text-lg font-medium mb-4">Event Notifications</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-base">New Bookings</Label>
+                        <p className="text-sm text-gray-600">Get notified when someone books with you</p>
+                      </div>
+                      <Switch
+                        checked={notifications.booking}
+                        onCheckedChange={() => handleNotificationToggle('booking')}
+                        data-action="toggle-booking-notifications"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-base">Cancellations</Label>
+                        <p className="text-sm text-gray-600">Get notified when bookings are cancelled</p>
+                      </div>
+                      <Switch
+                        checked={notifications.cancellation}
+                        onCheckedChange={() => handleNotificationToggle('cancellation')}
+                        data-action="toggle-cancellation-notifications"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-base">Reminders</Label>
+                        <p className="text-sm text-gray-600">Get reminded about upcoming meetings</p>
+                      </div>
+                      <Switch
+                        checked={notifications.reminder}
+                        onCheckedChange={() => handleNotificationToggle('reminder')}
+                        data-action="toggle-reminder-notifications"
+                      />
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="security">
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Change Password</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="currentPassword">Current Password</Label>
-                    <Input id="currentPassword" type="password" />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="newPassword">New Password</Label>
-                    <Input id="newPassword" type="password" />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                    <Input id="confirmPassword" type="password" />
-                  </div>
-                  
-                  <Button>Update Password</Button>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Two-Factor Authentication</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
+          <TabsContent value="availability" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Availability Settings</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-medium mb-4">Working Hours</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <Label>Enable 2FA</Label>
-                      <p className="text-sm text-gray-600">Add an extra layer of security to your account</p>
+                      <Label htmlFor="start-time">Start Time</Label>
+                      <Input
+                        id="start-time"
+                        type="time"
+                        value={availability.workingHours.start}
+                        onChange={(e) => setAvailability(prev => ({
+                          ...prev,
+                          workingHours: { ...prev.workingHours, start: e.target.value }
+                        }))}
+                        data-action="set-start-time"
+                      />
                     </div>
-                    <Switch />
+                    <div>
+                      <Label htmlFor="end-time">End Time</Label>
+                      <Input
+                        id="end-time"
+                        type="time"
+                        value={availability.workingHours.end}
+                        onChange={(e) => setAvailability(prev => ({
+                          ...prev,
+                          workingHours: { ...prev.workingHours, end: e.target.value }
+                        }))}
+                        data-action="set-end-time"
+                      />
+                    </div>
                   </div>
-                  
-                  <Button variant="outline">Setup Authenticator App</Button>
-                </CardContent>
-              </Card>
-            </div>
+                </div>
+
+                <Separator />
+
+                <div>
+                  <h3 className="text-lg font-medium mb-4">Buffer Settings</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="buffer-time">Buffer Time (minutes)</Label>
+                      <Input
+                        id="buffer-time"
+                        type="number"
+                        value={availability.bufferTime}
+                        onChange={(e) => setAvailability(prev => ({ ...prev, bufferTime: e.target.value }))}
+                        data-action="set-buffer-time"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="max-bookings">Max Daily Bookings</Label>
+                      <Input
+                        id="max-bookings"
+                        type="number"
+                        value={availability.maxDailyBookings}
+                        onChange={(e) => setAvailability(prev => ({ ...prev, maxDailyBookings: e.target.value }))}
+                        data-action="set-max-bookings"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
-          <TabsContent value="appearance">
+          <TabsContent value="security" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Security Settings</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-medium mb-4">Password</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="current-password">Current Password</Label>
+                      <Input id="current-password" type="password" data-action="enter-current-password" />
+                    </div>
+                    <div>
+                      <Label htmlFor="new-password">New Password</Label>
+                      <Input id="new-password" type="password" data-action="enter-new-password" />
+                    </div>
+                    <div>
+                      <Label htmlFor="confirm-password">Confirm New Password</Label>
+                      <Input id="confirm-password" type="password" data-action="confirm-new-password" />
+                    </div>
+                    <Button data-action="update-password">Update Password</Button>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div>
+                  <h3 className="text-lg font-medium mb-4">Two-Factor Authentication</h3>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Enable 2FA</p>
+                      <p className="text-sm text-gray-600">Add an extra layer of security to your account</p>
+                    </div>
+                    <Button variant="outline" data-action="setup-2fa">Setup 2FA</Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="appearance" className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Appearance Settings</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <Label>Theme</Label>
+                <div>
+                  <h3 className="text-lg font-medium mb-4">Theme</h3>
                   <Select defaultValue="light">
-                    <SelectTrigger>
+                    <SelectTrigger data-action="select-theme">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -309,84 +388,102 @@ const Settings = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                
-                <div className="space-y-2">
-                  <Label>Language</Label>
-                  <Select defaultValue="en">
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="en">English</SelectItem>
-                      <SelectItem value="es">Spanish</SelectItem>
-                      <SelectItem value="fr">French</SelectItem>
-                    </SelectContent>
-                  </Select>
+
+                <Separator />
+
+                <div>
+                  <h3 className="text-lg font-medium mb-4">Brand Colors</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div className="text-center">
+                      <div className="w-16 h-16 bg-blue-600 rounded-lg mx-auto mb-2 cursor-pointer" data-action="select-blue-brand"></div>
+                      <p className="text-sm">Blue</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="w-16 h-16 bg-green-600 rounded-lg mx-auto mb-2 cursor-pointer" data-action="select-green-brand"></div>
+                      <p className="text-sm">Green</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="w-16 h-16 bg-purple-600 rounded-lg mx-auto mb-2 cursor-pointer" data-action="select-purple-brand"></div>
+                      <p className="text-sm">Purple</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="w-16 h-16 bg-orange-600 rounded-lg mx-auto mb-2 cursor-pointer" data-action="select-orange-brand"></div>
+                      <p className="text-sm">Orange</p>
+                    </div>
+                  </div>
                 </div>
-                
-                <Button>Save Preferences</Button>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="integrations">
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Calendar Integrations</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <h4 className="font-medium">Google Calendar</h4>
-                      <p className="text-sm text-gray-600">Sync your events with Google Calendar</p>
+          <TabsContent value="integrations" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Integrations</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-medium mb-4">Calendar Sync</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 bg-blue-600 rounded"></div>
+                        <div>
+                          <p className="font-medium">Google Calendar</p>
+                          <p className="text-sm text-gray-600">Sync your VoiceCal events with Google Calendar</p>
+                        </div>
+                      </div>
+                      <Button data-action="connect-google-calendar">Connect</Button>
                     </div>
-                    <Button variant="outline">Connect</Button>
-                  </div>
-                  
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <h4 className="font-medium">Outlook Calendar</h4>
-                      <p className="text-sm text-gray-600">Sync your events with Outlook</p>
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 bg-gray-600 rounded"></div>
+                        <div>
+                          <p className="font-medium">Outlook Calendar</p>
+                          <p className="text-sm text-gray-600">Sync your VoiceCal events with Outlook</p>
+                        </div>
+                      </div>
+                      <Button variant="outline" data-action="connect-outlook-calendar">Connect</Button>
                     </div>
-                    <Button variant="outline">Connect</Button>
                   </div>
-                  
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <h4 className="font-medium">Apple Calendar</h4>
-                      <p className="text-sm text-gray-600">Sync your events with iCloud Calendar</p>
-                    </div>
-                    <Button variant="outline">Connect</Button>
-                  </div>
-                </CardContent>
-              </Card>
+                </div>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Communication Tools</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <h4 className="font-medium">Zoom</h4>
-                      <p className="text-sm text-gray-600">Automatically create Zoom meetings</p>
+                <Separator />
+
+                <div>
+                  <h3 className="text-lg font-medium mb-4">Video Conferencing</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 bg-blue-500 rounded"></div>
+                        <div>
+                          <p className="font-medium">Zoom</p>
+                          <p className="text-sm text-gray-600">Automatically create Zoom meetings for bookings</p>
+                        </div>
+                      </div>
+                      <Button data-action="connect-zoom">Connect</Button>
                     </div>
-                    <Button variant="outline">Connect</Button>
-                  </div>
-                  
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <h4 className="font-medium">Google Meet</h4>
-                      <p className="text-sm text-gray-600">Generate Google Meet links</p>
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 bg-green-600 rounded"></div>
+                        <div>
+                          <p className="font-medium">Google Meet</p>
+                          <p className="text-sm text-gray-600">Automatically create Google Meet links</p>
+                        </div>
+                      </div>
+                      <Button variant="outline" data-action="connect-google-meet">Connect</Button>
                     </div>
-                    <Button variant="outline">Connect</Button>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
+
+        <div className="flex justify-end space-x-4">
+          <Button variant="outline">Cancel</Button>
+          <Button onClick={saveSettings} data-action="save-settings">Save Changes</Button>
+        </div>
       </div>
     </Layout>
   );

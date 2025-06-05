@@ -1,242 +1,305 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Layout } from '../components/Layout';
-import { BarChart3, TrendingUp, Users, Calendar, Clock, Star } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
+import { TrendingUp, Calendar, Users, Clock, DollarSign, Download } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const Analytics = () => {
-  const weeklyData = [
-    { name: 'Mon', bookings: 12, cancelled: 2 },
-    { name: 'Tue', bookings: 15, cancelled: 1 },
-    { name: 'Wed', bookings: 8, cancelled: 3 },
-    { name: 'Thu', bookings: 18, cancelled: 0 },
-    { name: 'Fri', bookings: 22, cancelled: 2 },
-    { name: 'Sat', bookings: 6, cancelled: 1 },
-    { name: 'Sun', bookings: 4, cancelled: 0 }
-  ];
+  const [timeRange, setTimeRange] = useState('30d');
 
-  const monthlyTrend = [
-    { month: 'Jan', bookings: 120 },
-    { month: 'Feb', bookings: 145 },
-    { month: 'Mar', bookings: 135 },
-    { month: 'Apr', bookings: 168 },
-    { month: 'May', bookings: 192 },
-    { month: 'Jun', bookings: 210 }
+  const bookingData = [
+    { name: 'Jan', bookings: 45, revenue: 2250 },
+    { name: 'Feb', bookings: 52, revenue: 2600 },
+    { name: 'Mar', bookings: 48, revenue: 2400 },
+    { name: 'Apr', bookings: 61, revenue: 3050 },
+    { name: 'May', bookings: 55, revenue: 2750 },
+    { name: 'Jun', bookings: 67, revenue: 3350 },
   ];
 
   const eventTypeData = [
-    { name: '30-min Consultation', value: 45, color: '#3B82F6' },
-    { name: 'Team Sync', value: 30, color: '#10B981' },
-    { name: '60-min Strategy', value: 20, color: '#F59E0B' },
-    { name: 'Quick Chat', value: 15, color: '#EF4444' }
+    { name: '30-min Consultation', value: 45, color: '#8884d8' },
+    { name: '60-min Deep Dive', value: 25, color: '#82ca9d' },
+    { name: 'Team Meeting', value: 20, color: '#ffc658' },
+    { name: 'Quick Call', value: 10, color: '#ff7300' },
   ];
 
-  const timeSlotData = [
-    { time: '9:00 AM', bookings: 25 },
-    { time: '10:00 AM', bookings: 32 },
-    { time: '11:00 AM', bookings: 28 },
-    { time: '1:00 PM', bookings: 22 },
-    { time: '2:00 PM', bookings: 35 },
-    { time: '3:00 PM', bookings: 30 },
-    { time: '4:00 PM', bookings: 18 }
+  const weeklyData = [
+    { day: 'Mon', bookings: 12 },
+    { day: 'Tue', bookings: 19 },
+    { day: 'Wed', bookings: 15 },
+    { day: 'Thu', bookings: 22 },
+    { day: 'Fri', bookings: 18 },
+    { day: 'Sat', bookings: 8 },
+    { day: 'Sun', bookings: 5 },
   ];
+
+  const stats = [
+    {
+      title: 'Total Bookings',
+      value: '1,234',
+      change: '+12.5%',
+      icon: Calendar,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-100'
+    },
+    {
+      title: 'Total Revenue',
+      value: '$45,678',
+      change: '+8.2%',
+      icon: DollarSign,
+      color: 'text-green-600',
+      bgColor: 'bg-green-100'
+    },
+    {
+      title: 'Unique Clients',
+      value: '892',
+      change: '+15.3%',
+      icon: Users,
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-100'
+    },
+    {
+      title: 'Avg Duration',
+      value: '42 min',
+      change: '+2.1%',
+      icon: Clock,
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-100'
+    }
+  ];
+
+  const exportData = () => {
+    // Mock export functionality
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + "Date,Bookings,Revenue\n"
+      + bookingData.map(row => `${row.name},${row.bookings},${row.revenue}`).join("\n");
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "analytics_data.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center space-x-4">
-            <BarChart3 className="h-8 w-8 text-blue-600" />
+            <TrendingUp className="h-8 w-8 text-blue-600" />
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Analytics</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Analytics</h1>
               <p className="text-gray-600">Track your scheduling performance</p>
             </div>
           </div>
           
-          <Button variant="outline">
-            Export Report
-          </Button>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
+            <Select value={timeRange} onValueChange={setTimeRange}>
+              <SelectTrigger className="w-full sm:w-[180px]" data-action="analytics-timerange">
+                <SelectValue placeholder="Select time range" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7d">Last 7 days</SelectItem>
+                <SelectItem value="30d">Last 30 days</SelectItem>
+                <SelectItem value="90d">Last 90 days</SelectItem>
+                <SelectItem value="1y">Last year</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button onClick={exportData} variant="outline" data-action="export-analytics">
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+          </div>
         </div>
 
-        {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Bookings</p>
-                  <p className="text-3xl font-bold text-gray-900">1,247</p>
-                  <p className="text-sm text-green-600 flex items-center mt-1">
-                    <TrendingUp className="h-4 w-4 mr-1" />
-                    +12% from last month
-                  </p>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          {stats.map((stat, index) => (
+            <Card key={index}>
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">{stat.title}</p>
+                    <p className="text-xl sm:text-2xl font-bold text-gray-900">{stat.value}</p>
+                    <p className="text-sm text-green-600">{stat.change} from last period</p>
+                  </div>
+                  <div className={`p-2 sm:p-3 rounded-full ${stat.bgColor}`}>
+                    <stat.icon className={`h-5 w-5 sm:h-6 sm:w-6 ${stat.color}`} />
+                  </div>
                 </div>
-                <Calendar className="h-12 w-12 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Unique Clients</p>
-                  <p className="text-3xl font-bold text-gray-900">324</p>
-                  <p className="text-sm text-green-600 flex items-center mt-1">
-                    <TrendingUp className="h-4 w-4 mr-1" />
-                    +8% from last month
-                  </p>
-                </div>
-                <Users className="h-12 w-12 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Avg Duration</p>
-                  <p className="text-3xl font-bold text-gray-900">42m</p>
-                  <p className="text-sm text-green-600 flex items-center mt-1">
-                    <TrendingUp className="h-4 w-4 mr-1" />
-                    +5% from last month
-                  </p>
-                </div>
-                <Clock className="h-12 w-12 text-orange-600" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Satisfaction</p>
-                  <p className="text-3xl font-bold text-gray-900">4.8</p>
-                  <p className="text-sm text-green-600 flex items-center mt-1">
-                    <Star className="h-4 w-4 mr-1" />
-                    96% positive feedback
-                  </p>
-                </div>
-                <Star className="h-12 w-12 text-yellow-600" />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
-        {/* Charts */}
+        {/* Charts Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Bookings Over Time */}
           <Card>
             <CardHeader>
-              <CardTitle>Weekly Bookings Overview</CardTitle>
+              <CardTitle>Bookings Over Time</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={weeklyData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="bookings" fill="#3B82F6" />
-                  <Bar dataKey="cancelled" fill="#EF4444" />
-                </BarChart>
-              </ResponsiveContainer>
+              <div className="h-64 sm:h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={bookingData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="bookings" fill="#3b82f6" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </CardContent>
           </Card>
 
+          {/* Revenue Trend */}
           <Card>
             <CardHeader>
-              <CardTitle>Monthly Trend</CardTitle>
+              <CardTitle>Revenue Trend</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={monthlyTrend}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="bookings" stroke="#3B82F6" strokeWidth={3} />
-                </LineChart>
-              </ResponsiveContainer>
+              <div className="h-64 sm:h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={bookingData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Line type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={2} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
             </CardContent>
           </Card>
 
+          {/* Event Types Distribution */}
           <Card>
             <CardHeader>
               <CardTitle>Event Types Distribution</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={eventTypeData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {eventTypeData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
+              <div className="h-64 sm:h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={eventTypeData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {eventTypeData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Weekly Pattern */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Weekly Booking Pattern</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64 sm:h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={weeklyData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="day" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="bookings" fill="#8b5cf6" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Additional Insights */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Peak Hours</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">9:00 AM - 11:00 AM</span>
+                  <span className="font-medium">32%</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">2:00 PM - 4:00 PM</span>
+                  <span className="font-medium">28%</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">10:00 AM - 12:00 PM</span>
+                  <span className="font-medium">24%</span>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Popular Time Slots</CardTitle>
+              <CardTitle className="text-lg">Top Clients</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={timeSlotData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="time" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="bookings" fill="#10B981" />
-                </BarChart>
-              </ResponsiveContainer>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Acme Corp</span>
+                  <span className="font-medium">12 bookings</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">TechStart Inc</span>
+                  <span className="font-medium">8 bookings</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Global Solutions</span>
+                  <span className="font-medium">6 bookings</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Conversion Rate</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-green-600">78.5%</div>
+                  <p className="text-sm text-gray-600">Page views to bookings</p>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Page Views</span>
+                    <span>1,247</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Completed Bookings</span>
+                    <span>979</span>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
-
-        {/* Insights */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Key Insights</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="p-4 bg-blue-50 rounded-lg">
-                <h4 className="font-semibold text-blue-900 mb-2">Peak Hours</h4>
-                <p className="text-sm text-blue-700">
-                  Your busiest booking times are between 2:00 PM - 4:00 PM. Consider adding more availability during these hours.
-                </p>
-              </div>
-              <div className="p-4 bg-green-50 rounded-lg">
-                <h4 className="font-semibold text-green-900 mb-2">Popular Services</h4>
-                <p className="text-sm text-green-700">
-                  30-minute consultations are your most popular service, accounting for 45% of all bookings.
-                </p>
-              </div>
-              <div className="p-4 bg-orange-50 rounded-lg">
-                <h4 className="font-semibold text-orange-900 mb-2">Growth Opportunity</h4>
-                <p className="text-sm text-orange-700">
-                  Weekend bookings are low. Consider offering special weekend rates to increase utilization.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </Layout>
   );
