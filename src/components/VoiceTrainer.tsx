@@ -1,70 +1,97 @@
 
 import React, { useState, useEffect } from 'react';
-import { Mic, Volume2, VolumeX, Play, Pause, RotateCcw } from 'lucide-react';
+import { Volume2, VolumeX, Play, Pause, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 
-interface TrainingStep {
+interface TrainingAction {
   id: string;
-  title: string;
+  element: string;
   instruction: string;
-  target?: string;
-  completed: boolean;
+  trigger: 'click' | 'hover' | 'focus';
 }
 
 export const VoiceTrainer: React.FC = () => {
   const [isActive, setIsActive] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
   const [speechSupported, setSpeechSupported] = useState(false);
+  const [currentAction, setCurrentAction] = useState<string | null>(null);
 
-  const trainingSteps: TrainingStep[] = [
+  const trainingActions: TrainingAction[] = [
     {
-      id: 'welcome',
-      title: 'Welcome to VoiceCal',
-      instruction: 'Welcome to VoiceCal! I will guide you through creating your first event type. This voice-guided system will help you master every feature.',
-      completed: false
+      id: 'new-event',
+      element: '[data-action="new-event"]',
+      instruction: 'Click here to create a new event type. This will open the event creation form where you can set duration, availability, and other preferences.',
+      trigger: 'hover'
     },
     {
-      id: 'create-event',
-      title: 'Create Event Type',
-      instruction: 'Click the "New Event Type" button in the sidebar to create your first scheduling event.',
-      target: 'new-event-button',
-      completed: false
+      id: 'dashboard-link',
+      element: '[data-action="dashboard"]',
+      instruction: 'This is your dashboard. Here you can see an overview of your bookings, upcoming events, and quick statistics.',
+      trigger: 'hover'
     },
     {
-      id: 'event-details',
-      title: 'Set Event Details',
-      instruction: 'Give your event a name like "30-minute consultation" and set the duration using the dropdown menu.',
-      completed: false
+      id: 'calendar-link',
+      element: '[data-action="calendar"]',
+      instruction: 'Access your calendar view here to see all your scheduled events in a traditional calendar format.',
+      trigger: 'hover'
     },
     {
-      id: 'availability',
-      title: 'Set Availability',
-      instruction: 'Configure your working hours and buffer times between meetings. This ensures you have breaks between appointments.',
-      completed: false
+      id: 'events-link',
+      element: '[data-action="events"]',
+      instruction: 'Manage all your event types here. You can create, edit, or delete different types of meetings.',
+      trigger: 'hover'
     },
     {
-      id: 'share-link',
-      title: 'Share Your Link',
-      instruction: 'Your event type is ready! Copy the booking link to share with clients, or embed it on your website.',
-      completed: false
+      id: 'bookings-link',
+      element: '[data-action="bookings"]',
+      instruction: 'View and manage all your bookings. See who has booked time with you and when.',
+      trigger: 'hover'
+    },
+    {
+      id: 'analytics-link',
+      element: '[data-action="analytics"]',
+      instruction: 'View detailed analytics about your scheduling patterns, popular time slots, and booking trends.',
+      trigger: 'hover'
     }
   ];
 
   useEffect(() => {
-    // Check if browser supports speech synthesis
     if ('speechSynthesis' in window) {
       setSpeechSupported(true);
     }
   }, []);
 
+  useEffect(() => {
+    if (!isActive || !speechSupported) return;
+
+    const handleElementInteraction = (e: Event) => {
+      const target = e.target as HTMLElement;
+      const actionElement = target.closest('[data-action]');
+      
+      if (actionElement) {
+        const actionId = actionElement.getAttribute('data-action');
+        const action = trainingActions.find(a => a.element.includes(actionId!));
+        
+        if (action && action.id !== currentAction) {
+          setCurrentAction(action.id);
+          speak(action.instruction);
+        }
+      }
+    };
+
+    // Add event listeners for training
+    document.addEventListener('mouseover', handleElementInteraction);
+    document.addEventListener('focus', handleElementInteraction, true);
+
+    return () => {
+      document.removeEventListener('mouseover', handleElementInteraction);
+      document.removeEventListener('focus', handleElementInteraction, true);
+    };
+  }, [isActive, speechSupported, currentAction]);
+
   const speak = (text: string) => {
     if (!speechSupported) return;
     
-    // Cancel any ongoing speech
     window.speechSynthesis.cancel();
     
     const utterance = new SpeechSynthesisUtterance(text);
@@ -84,122 +111,62 @@ export const VoiceTrainer: React.FC = () => {
     setIsPlaying(false);
   };
 
-  const nextStep = () => {
-    if (currentStep < trainingSteps.length - 1) {
-      setCurrentStep(currentStep + 1);
-      speak(trainingSteps[currentStep + 1].instruction);
-    }
-  };
-
-  const resetTraining = () => {
-    setCurrentStep(0);
-    stopSpeech();
-  };
-
   const toggleTraining = () => {
     if (isActive) {
       stopSpeech();
       setIsActive(false);
+      setCurrentAction(null);
     } else {
       setIsActive(true);
-      speak(trainingSteps[currentStep].instruction);
+      speak('Voice training activated. Hover over any element to hear instructions about how to use it.');
+    }
+  };
+
+  const resetTraining = () => {
+    stopSpeech();
+    setCurrentAction(null);
+    if (isActive) {
+      speak('Training reset. Continue hovering over elements to learn about VoiceCal features.');
     }
   };
 
   if (!speechSupported) {
-    return (
-      <div className="fixed bottom-4 right-4 z-50">
-        <Card className="w-80 bg-yellow-50 border-yellow-200">
-          <CardContent className="p-4">
-            <p className="text-sm text-yellow-800">
-              Voice training requires a modern browser with speech synthesis support.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return null;
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50">
-      <Card className={`w-80 transition-all duration-300 ${isActive ? 'shadow-lg' : 'shadow-md'}`}>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg flex items-center space-x-2">
-              <Mic className="h-5 w-5 text-blue-600" />
-              <span>Voice Trainer</span>
-            </CardTitle>
-            <Badge variant={isActive ? "default" : "secondary"}>
-              {isActive ? 'Active' : 'Inactive'}
-            </Badge>
-          </div>
-        </CardHeader>
-        
-        <CardContent className="space-y-4">
-          {isActive && (
-            <>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium">Step {currentStep + 1} of {trainingSteps.length}</span>
-                  <span className="text-gray-500">
-                    {Math.round(((currentStep + 1) / trainingSteps.length) * 100)}%
-                  </span>
-                </div>
-                <Progress value={((currentStep + 1) / trainingSteps.length) * 100} />
-              </div>
-              
-              <div className="space-y-2">
-                <h4 className="font-medium text-gray-900">
-                  {trainingSteps[currentStep].title}
-                </h4>
-                <p className="text-sm text-gray-600 leading-relaxed">
-                  {trainingSteps[currentStep].instruction}
-                </p>
-              </div>
-            </>
-          )}
+    <div className="fixed bottom-4 right-4 z-50 flex items-center space-x-2">
+      <Button
+        onClick={toggleTraining}
+        variant={isActive ? "default" : "outline"}
+        size="sm"
+        className="flex items-center space-x-2 shadow-lg"
+      >
+        {isActive ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+        <span>{isActive ? 'Voice On' : 'Voice Off'}</span>
+      </Button>
+      
+      {isActive && (
+        <>
+          <Button
+            onClick={isPlaying ? stopSpeech : () => speak('Voice training is active. Hover over elements to learn about them.')}
+            variant="outline"
+            size="sm"
+            aria-label={isPlaying ? 'Stop speech' : 'Play instructions'}
+          >
+            {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+          </Button>
           
-          <div className="flex items-center space-x-2">
-            <Button
-              onClick={toggleTraining}
-              variant={isActive ? "default" : "outline"}
-              size="sm"
-              className="flex-1"
-            >
-              {isActive ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-              <span className="ml-2">{isActive ? 'Stop Training' : 'Start Training'}</span>
-            </Button>
-            
-            {isActive && (
-              <>
-                <Button
-                  onClick={isPlaying ? stopSpeech : () => speak(trainingSteps[currentStep].instruction)}
-                  variant="outline"
-                  size="sm"
-                  aria-label={isPlaying ? 'Pause speech' : 'Play speech'}
-                >
-                  {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                </Button>
-                
-                <Button
-                  onClick={resetTraining}
-                  variant="outline"
-                  size="sm"
-                  aria-label="Reset training"
-                >
-                  <RotateCcw className="h-4 w-4" />
-                </Button>
-              </>
-            )}
-          </div>
-          
-          {isActive && currentStep < trainingSteps.length - 1 && (
-            <Button onClick={nextStep} variant="outline" size="sm" className="w-full">
-              Next Step
-            </Button>
-          )}
-        </CardContent>
-      </Card>
+          <Button
+            onClick={resetTraining}
+            variant="outline"
+            size="sm"
+            aria-label="Reset training"
+          >
+            <RotateCcw className="h-4 w-4" />
+          </Button>
+        </>
+      )}
     </div>
   );
 };

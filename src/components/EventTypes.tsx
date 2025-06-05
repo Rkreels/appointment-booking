@@ -1,276 +1,193 @@
 
 import React, { useState } from 'react';
-import { Plus, Clock, Users, Copy, Settings, Trash2, ExternalLink } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Layout } from './Layout';
+import { Clock, Plus, Copy, Edit, Trash2, Settings, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 
-interface EventType {
-  id: string;
-  name: string;
-  duration: number;
-  description: string;
-  type: 'one-on-one' | 'group' | 'collective';
-  bookings: number;
-  color: string;
-  active: boolean;
-}
-
-export const EventTypes: React.FC = () => {
-  const [eventTypes, setEventTypes] = useState<EventType[]>([
+const EventTypes: React.FC = () => {
+  const [eventTypes] = useState([
     {
-      id: '1',
-      name: '30-Minute Consultation',
+      id: 1,
+      name: '30-min Consultation',
       duration: 30,
-      description: 'Quick consultation call to discuss your needs',
-      type: 'one-on-one',
-      bookings: 24,
-      color: 'blue',
+      price: '$150',
+      description: 'One-on-one consultation for project planning and strategy.',
+      bookings: 45,
+      color: 'bg-blue-500',
       active: true
     },
     {
-      id: '2',
+      id: 2,
       name: 'Team Sync Meeting',
-      duration: 60,
-      description: 'Weekly team synchronization meeting',
-      type: 'group',
-      bookings: 8,
-      color: 'green',
+      duration: 45,
+      price: 'Free',
+      description: 'Weekly team alignment and progress review.',
+      bookings: 23,
+      color: 'bg-green-500',
       active: true
     },
     {
-      id: '3',
-      name: 'Discovery Call',
-      duration: 45,
-      description: 'Initial discovery call for new projects',
-      type: 'one-on-one',
+      id: 3,
+      name: '60-min Strategy Session',
+      duration: 60,
+      price: '$250',
+      description: 'Deep dive into business strategy and planning.',
       bookings: 12,
-      color: 'purple',
+      color: 'bg-purple-500',
+      active: false
+    },
+    {
+      id: 4,
+      name: '15-min Quick Chat',
+      duration: 15,
+      price: 'Free',
+      description: 'Brief check-in or follow-up conversation.',
+      bookings: 67,
+      color: 'bg-orange-500',
       active: true
     }
   ]);
 
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [newEvent, setNewEvent] = useState({
-    name: '',
-    duration: 30,
-    description: '',
-    type: 'one-on-one' as EventType['type']
-  });
-
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'one-on-one': return 'bg-blue-100 text-blue-800';
-      case 'group': return 'bg-green-100 text-green-800';
-      case 'collective': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const handleCreateEvent = () => {
-    const newEventType: EventType = {
-      id: Date.now().toString(),
-      ...newEvent,
-      bookings: 0,
-      color: 'blue',
-      active: true
-    };
-    setEventTypes([...eventTypes, newEventType]);
-    setNewEvent({ name: '', duration: 30, description: '', type: 'one-on-one' });
-    setIsCreateDialogOpen(false);
-  };
-
-  const copyBookingLink = (eventId: string) => {
-    const link = `https://voicecal.app/book/${eventId}`;
-    navigator.clipboard.writeText(link);
-    // You could add a toast notification here
-  };
-
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Event Types</h2>
-          <p className="text-gray-600 mt-1">
-            Create and manage your scheduling event types
-          </p>
-        </div>
-        
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="mr-2 h-4 w-4" />
-              New Event Type
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Create New Event Type</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="name">Event Name</Label>
-                <Input
-                  id="name"
-                  value={newEvent.name}
-                  onChange={(e) => setNewEvent({ ...newEvent, name: e.target.value })}
-                  placeholder="e.g., 30-Minute Consultation"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="duration">Duration (minutes)</Label>
-                <Select
-                  value={newEvent.duration.toString()}
-                  onValueChange={(value) => setNewEvent({ ...newEvent, duration: parseInt(value) })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="15">15 minutes</SelectItem>
-                    <SelectItem value="30">30 minutes</SelectItem>
-                    <SelectItem value="45">45 minutes</SelectItem>
-                    <SelectItem value="60">1 hour</SelectItem>
-                    <SelectItem value="90">1.5 hours</SelectItem>
-                    <SelectItem value="120">2 hours</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <Label htmlFor="type">Meeting Type</Label>
-                <Select
-                  value={newEvent.type}
-                  onValueChange={(value) => setNewEvent({ ...newEvent, type: value as EventType['type'] })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="one-on-one">One-on-One</SelectItem>
-                    <SelectItem value="group">Group Meeting</SelectItem>
-                    <SelectItem value="collective">Collective Event</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={newEvent.description}
-                  onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
-                  placeholder="Brief description of this event type"
-                  rows={3}
-                />
-              </div>
-              
-              <Button onClick={handleCreateEvent} className="w-full">
-                Create Event Type
-              </Button>
+    <Layout>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <Clock className="h-8 w-8 text-blue-600" />
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Event Types</h1>
+              <p className="text-gray-600">Create and manage your booking types</p>
             </div>
-          </DialogContent>
-        </Dialog>
-      </div>
+          </div>
+          
+          <Button data-action="new-event" className="flex items-center space-x-2">
+            <Plus className="h-4 w-4" />
+            <span>New Event Type</span>
+          </Button>
+        </div>
 
-      {/* Event Types Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {eventTypes.map((event) => (
-          <Card key={event.id} className="hover:shadow-lg transition-shadow">
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <CardTitle className="text-lg font-semibold text-gray-900 mb-2">
-                    {event.name}
-                  </CardTitle>
-                  <div className="flex items-center space-x-3 text-sm text-gray-600">
-                    <div className="flex items-center">
-                      <Clock className="h-4 w-4 mr-1" />
-                      {event.duration}m
-                    </div>
-                    <div className="flex items-center">
-                      <Users className="h-4 w-4 mr-1" />
-                      {event.bookings}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {eventTypes.map((eventType) => (
+            <Card key={eventType.id} className="relative hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-4 h-4 rounded-full ${eventType.color}`} />
+                    <div>
+                      <CardTitle className="text-lg">{eventType.name}</CardTitle>
+                      <div className="flex items-center space-x-2 mt-1">
+                        <Badge variant="secondary">
+                          {eventType.duration} min
+                        </Badge>
+                        <Badge variant={eventType.price === 'Free' ? 'secondary' : 'default'}>
+                          {eventType.price}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <Badge className={getTypeColor(event.type)}>
-                  {event.type.replace('-', ' ')}
-                </Badge>
-              </div>
-            </CardHeader>
-            
-            <CardContent className="space-y-4">
-              <p className="text-sm text-gray-600 leading-relaxed">
-                {event.description}
-              </p>
-              
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => copyBookingLink(event.id)}
-                  className="flex-1"
-                >
-                  <Copy className="h-4 w-4 mr-1" />
-                  Copy Link
-                </Button>
-                
-                <Button variant="outline" size="sm">
-                  <ExternalLink className="h-4 w-4" />
-                </Button>
-                
-                <Button variant="outline" size="sm">
-                  <Settings className="h-4 w-4" />
-                </Button>
-                
-                <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-              
-              <div className="pt-2 border-t">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">Status</span>
-                  <Badge variant={event.active ? "default" : "secondary"}>
-                    {event.active ? 'Active' : 'Inactive'}
+                  <Badge variant={eventType.active ? 'default' : 'secondary'}>
+                    {eventType.active ? 'Active' : 'Inactive'}
                   </Badge>
                 </div>
+              </CardHeader>
+              
+              <CardContent className="space-y-4">
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  {eventType.description}
+                </p>
+                
+                <div className="flex items-center space-x-4 text-sm text-gray-500">
+                  <div className="flex items-center space-x-1">
+                    <Users className="h-4 w-4" />
+                    <span>{eventType.bookings} bookings</span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between pt-4 border-t">
+                  <div className="flex items-center space-x-2">
+                    <Button variant="outline" size="sm">
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <Settings className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+          
+          {/* Add New Event Type Card */}
+          <Card className="border-2 border-dashed border-gray-300 hover:border-blue-400 transition-colors cursor-pointer">
+            <CardContent className="flex flex-col items-center justify-center py-12 space-y-4">
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                <Plus className="h-6 w-6 text-blue-600" />
+              </div>
+              <div className="text-center">
+                <h3 className="font-medium text-gray-900">Create New Event Type</h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  Set up a new type of meeting or appointment
+                </p>
               </div>
             </CardContent>
           </Card>
-        ))}
-      </div>
+        </div>
 
-      {/* Voice Training Tip */}
-      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-        <CardContent className="p-6">
-          <div className="flex items-center space-x-4">
-            <div className="bg-blue-600 p-3 rounded-lg">
-              <Users className="h-6 w-6 text-white" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-gray-900 mb-1">
-                Voice Training Available
-              </h3>
-              <p className="text-gray-600 text-sm">
-                Learn how to create and customize event types with step-by-step voice guidance. 
-                Perfect for mastering advanced features like buffer times and location settings.
-              </p>
-            </div>
-            <Button variant="outline" className="bg-white">
-              Start Training
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600">{eventTypes.length}</div>
+                <div className="text-sm text-gray-600">Total Types</div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">
+                  {eventTypes.filter(et => et.active).length}
+                </div>
+                <div className="text-sm text-gray-600">Active</div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-purple-600">
+                  {eventTypes.reduce((sum, et) => sum + et.bookings, 0)}
+                </div>
+                <div className="text-sm text-gray-600">Total Bookings</div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-orange-600">
+                  {Math.round(eventTypes.reduce((sum, et) => sum + et.duration, 0) / eventTypes.length)}m
+                </div>
+                <div className="text-sm text-gray-600">Avg Duration</div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </Layout>
   );
 };
+
+export default EventTypes;
