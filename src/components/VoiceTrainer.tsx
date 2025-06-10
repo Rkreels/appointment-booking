@@ -1,357 +1,288 @@
 
-import React, { useState, useEffect } from 'react';
-import { Volume2, VolumeX } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import React, { useState, useEffect, useRef } from 'react';
+import { Mic, MicOff, Volume2, VolumeX, X } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 
-interface TrainingAction {
-  id: string;
-  element: string;
-  instruction: string;
-  trigger: 'hover' | 'focus';
+interface VoiceInstruction {
+  trigger: string;
+  action: string;
+  description: string;
+  element?: string;
 }
 
 export const VoiceTrainer: React.FC = () => {
-  const [isActive, setIsActive] = useState(true); // Always on by default
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [speechSupported, setSpeechSupported] = useState(false);
-  const [currentAction, setCurrentAction] = useState<string | null>(null);
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const [currentInstruction, setCurrentInstruction] = useState<string>('');
+  const recognitionRef = useRef<any>(null);
+  const synthRef = useRef<SpeechSynthesis | null>(null);
+  const location = useLocation();
 
-  const trainingActions: TrainingAction[] = [
-    // Navigation actions
-    {
-      id: 'dashboard-link',
-      element: '[data-action="dashboard"]',
-      instruction: 'Navigate to your main dashboard. Here you can see an overview of your bookings, upcoming events, and quick statistics.',
-      trigger: 'hover'
-    },
-    {
-      id: 'calendar-link',
-      element: '[data-action="calendar"]',
-      instruction: 'Access your calendar view to see all your scheduled events in a traditional calendar format with day, week, and month views.',
-      trigger: 'hover'
-    },
-    {
-      id: 'events-link',
-      element: '[data-action="events"]',
-      instruction: 'Manage all your event types. Create, edit, duplicate, or delete different types of meetings and appointments.',
-      trigger: 'hover'
-    },
-    {
-      id: 'bookings-link',
-      element: '[data-action="bookings"]',
-      instruction: 'View and manage all your bookings. See who has booked time with you, when, and manage booking details.',
-      trigger: 'hover'
-    },
-    {
-      id: 'analytics-link',
-      element: '[data-action="analytics"]',
-      instruction: 'View detailed analytics about your scheduling patterns, popular time slots, booking trends, and revenue insights.',
-      trigger: 'hover'
-    },
-    {
-      id: 'settings-link',
-      element: '[data-action="settings"]',
-      instruction: 'Configure your account settings, availability, integrations, and preferences.',
-      trigger: 'hover'
-    },
+  const voiceInstructions: VoiceInstruction[] = [
+    // Navigation commands
+    { trigger: 'go to dashboard', action: 'dashboard', description: 'Navigate to dashboard', element: '[data-action="dashboard"]' },
+    { trigger: 'go to calendar', action: 'calendar', description: 'Navigate to calendar', element: '[data-action="calendar"]' },
+    { trigger: 'go to events', action: 'events', description: 'Navigate to event types', element: '[data-action="events"]' },
+    { trigger: 'go to bookings', action: 'bookings', description: 'Navigate to bookings', element: '[data-action="bookings"]' },
+    { trigger: 'go to analytics', action: 'analytics', description: 'Navigate to analytics', element: '[data-action="analytics"]' },
+    { trigger: 'go to settings', action: 'settings', description: 'Navigate to settings', element: '[data-action="settings"]' },
 
-    // Event management actions
-    {
-      id: 'new-event',
-      element: '[data-action="new-event"]',
-      instruction: 'Create a new event type. Set the duration, price, description, location, and availability preferences for this type of meeting.',
-      trigger: 'hover'
-    },
-    {
-      id: 'edit-event',
-      element: '[data-action="edit-event"]',
-      instruction: 'Edit this event type. Modify the duration, description, pricing, and availability settings.',
-      trigger: 'hover'
-    },
-    {
-      id: 'delete-event',
-      element: '[data-action="delete-event"]',
-      instruction: 'Delete this event type permanently. This action cannot be undone and will remove all associated settings.',
-      trigger: 'hover'
-    },
-    {
-      id: 'duplicate-event',
-      element: '[data-action="duplicate-event"]',
-      instruction: 'Create a copy of this event type. Useful for creating similar meeting types with slight variations.',
-      trigger: 'hover'
-    },
+    // Dashboard actions
+    { trigger: 'create new event', action: 'create-new-event', description: 'Create a new event type', element: '[data-action="create-new-event"]' },
+    { trigger: 'view public booking', action: 'view-public-booking', description: 'View public booking page', element: '[data-action="view-public-booking"]' },
+    { trigger: 'view today bookings', action: 'view-today-bookings', description: 'View today\'s bookings', element: '[data-action="view-today-bookings"]' },
+    { trigger: 'view this week', action: 'view-this-week', description: 'View this week\'s bookings', element: '[data-action="view-this-week"]' },
+    { trigger: 'view total clients', action: 'view-total-clients', description: 'View total clients', element: '[data-action="view-total-clients"]' },
+    { trigger: 'view revenue', action: 'view-revenue', description: 'View revenue stats', element: '[data-action="view-revenue"]' },
 
-    // Booking management actions
-    {
-      id: 'new-booking',
-      element: '[data-action="new-booking"]',
-      instruction: 'Create a new booking manually. Enter attendee details, select date and time, and set up the meeting.',
-      trigger: 'hover'
-    },
-    {
-      id: 'edit-booking',
-      element: '[data-action="edit-booking"]',
-      instruction: 'Edit this booking. Modify attendee information, reschedule the meeting, or update booking details.',
-      trigger: 'hover'
-    },
-    {
-      id: 'view-booking',
-      element: '[data-action="view-booking"]',
-      instruction: 'View detailed information about this booking including attendee details, meeting information, and status.',
-      trigger: 'hover'
-    },
-    {
-      id: 'cancel-booking',
-      element: '[data-action="cancel-booking"]',
-      instruction: 'Cancel this booking. The attendee will be automatically notified about the cancellation.',
-      trigger: 'hover'
-    },
-    {
-      id: 'reschedule-booking',
-      element: '[data-action="reschedule-booking"]',
-      instruction: 'Reschedule this booking to a different date or time. The attendee will receive notification about the change.',
-      trigger: 'hover'
-    },
+    // Calendar actions
+    { trigger: 'previous month', action: 'calendar-prev', description: 'Go to previous month', element: '[data-action="calendar-prev"]' },
+    { trigger: 'next month', action: 'calendar-next', description: 'Go to next month', element: '[data-action="calendar-next"]' },
+    { trigger: 'today', action: 'calendar-today', description: 'Go to today', element: '[data-action="calendar-today"]' },
+    { trigger: 'week view', action: 'calendar-week', description: 'Switch to week view', element: '[data-action="calendar-week"]' },
+    { trigger: 'month view', action: 'calendar-month', description: 'Switch to month view', element: '[data-action="calendar-month"]' },
+    { trigger: 'day view', action: 'calendar-day', description: 'Switch to day view', element: '[data-action="calendar-day"]' },
 
-    // Public booking flow actions
-    {
-      id: 'select-event-type',
-      element: '[data-action="select-event-type"]',
-      instruction: 'Select this event type to proceed with booking. You will then choose a date and time for your meeting.',
-      trigger: 'hover'
-    },
-    {
-      id: 'select-date',
-      element: '[data-action="select-date"]',
-      instruction: 'Choose your preferred date from the calendar. Only available dates are shown.',
-      trigger: 'hover'
-    },
-    {
-      id: 'select-time-slot',
-      element: '[data-action="select-time-slot"]',
-      instruction: 'Select this available time slot for your meeting. Times are shown in your local timezone.',
-      trigger: 'hover'
-    },
-    {
-      id: 'enter-name',
-      element: '[data-action="enter-name"]',
-      instruction: 'Enter your full name. This is required for booking confirmation and will appear in calendar invites.',
-      trigger: 'focus'
-    },
-    {
-      id: 'enter-email',
-      element: '[data-action="enter-email"]',
-      instruction: 'Enter your email address. You will receive booking confirmations and meeting details at this address.',
-      trigger: 'focus'
-    },
-    {
-      id: 'enter-phone',
-      element: '[data-action="enter-phone"]',
-      instruction: 'Optionally enter your phone number for additional contact method and meeting reminders.',
-      trigger: 'focus'
-    },
-    {
-      id: 'enter-message',
-      element: '[data-action="enter-message"]',
-      instruction: 'Add any additional information or questions about the meeting. This helps prepare for your session.',
-      trigger: 'focus'
-    },
-    {
-      id: 'confirm-booking',
-      element: '[data-action="confirm-booking"]',
-      instruction: 'Confirm your booking. You will receive an email confirmation with meeting details and calendar invite.',
-      trigger: 'hover'
-    },
+    // Event type actions
+    { trigger: 'create event type', action: 'create-event-type', description: 'Create new event type', element: '[data-action="create-event-type"]' },
+    { trigger: 'edit event', action: 'edit-event', description: 'Edit event type', element: '[data-action="edit-event"]' },
+    { trigger: 'duplicate event', action: 'duplicate-event', description: 'Duplicate event type', element: '[data-action="duplicate-event"]' },
+    { trigger: 'delete event', action: 'delete-event', description: 'Delete event type', element: '[data-action="delete-event"]' },
 
-    // Settings and configuration actions
-    {
-      id: 'select-timezone',
-      element: '[data-action="select-timezone"]',
-      instruction: 'Select your timezone. This affects how times are displayed and when meetings are scheduled.',
-      trigger: 'hover'
-    },
-    {
-      id: 'toggle-availability',
-      element: '[data-action*="toggle-"]',
-      instruction: 'Toggle availability for this day. When enabled, you can set specific working hours.',
-      trigger: 'hover'
-    },
-    {
-      id: 'add-time-slot',
-      element: '[data-action*="add-time-slot"]',
-      instruction: 'Add additional working hours for this day. Useful if you have split schedules or breaks.',
-      trigger: 'hover'
-    },
-    {
-      id: 'save-settings',
-      element: '[data-action*="save"]',
-      instruction: 'Save your current settings and apply changes to your scheduling system.',
-      trigger: 'hover'
-    },
+    // Booking actions
+    { trigger: 'filter upcoming', action: 'filter-upcoming', description: 'Filter upcoming bookings', element: '[data-action="filter-upcoming"]' },
+    { trigger: 'filter past', action: 'filter-past', description: 'Filter past bookings', element: '[data-action="filter-past"]' },
+    { trigger: 'filter cancelled', action: 'filter-cancelled', description: 'Filter cancelled bookings', element: '[data-action="filter-cancelled"]' },
+    { trigger: 'reschedule booking', action: 'reschedule-booking', description: 'Reschedule a booking', element: '[data-action="reschedule-booking"]' },
+    { trigger: 'cancel booking', action: 'cancel-booking', description: 'Cancel a booking', element: '[data-action="cancel-booking"]' },
 
     // Analytics actions
-    {
-      id: 'export-analytics',
-      element: '[data-action="export-analytics"]',
-      instruction: 'Export your analytics data as a CSV file for further analysis or reporting.',
-      trigger: 'hover'
-    },
-    {
-      id: 'analytics-timerange',
-      element: '[data-action="analytics-timerange"]',
-      instruction: 'Select the time range for analytics data. Choose from last 7 days, 30 days, 90 days, or one year.',
-      trigger: 'hover'
-    },
+    { trigger: 'export analytics', action: 'export-analytics', description: 'Export analytics data', element: '[data-action="export-analytics"]' },
+    { trigger: 'change time range', action: 'analytics-timerange', description: 'Change analytics time range', element: '[data-action="analytics-timerange"]' },
 
-    // Integration actions
-    {
-      id: 'toggle-integration',
-      element: '[data-action*="toggle-"]',
-      instruction: 'Enable or disable this integration. When enabled, this service will automatically sync with your bookings.',
-      trigger: 'hover'
-    },
-    {
-      id: 'test-webhook',
-      element: '[data-action="test-webhook"]',
-      instruction: 'Test your webhook configuration to ensure it is working correctly and receiving booking data.',
-      trigger: 'hover'
-    },
+    // Settings actions
+    { trigger: 'profile settings', action: 'profile-settings', description: 'Open profile settings', element: '[data-action="profile-settings"]' },
+    { trigger: 'availability settings', action: 'availability-settings', description: 'Open availability settings', element: '[data-action="availability-settings"]' },
+    { trigger: 'notification settings', action: 'notification-settings', description: 'Open notification settings', element: '[data-action="notification-settings"]' },
+    { trigger: 'integration settings', action: 'integration-settings', description: 'Open integration settings', element: '[data-action="integration-settings"]' },
+    { trigger: 'security settings', action: 'security-settings', description: 'Open security settings', element: '[data-action="security-settings"]' },
+    { trigger: 'appearance settings', action: 'appearance-settings', description: 'Open appearance settings', element: '[data-action="appearance-settings"]' },
 
-    // Navigation helper actions
-    {
-      id: 'back-to-events',
-      element: '[data-action="back-to-events"]',
-      instruction: 'Go back to the event type selection page to choose a different meeting type.',
-      trigger: 'hover'
-    },
-    {
-      id: 'back-to-time-selection',
-      element: '[data-action="back-to-time-selection"]',
-      instruction: 'Return to the date and time selection page to choose a different time slot.',
-      trigger: 'hover'
-    },
-    {
-      id: 'schedule-another',
-      element: '[data-action="schedule-another"]',
-      instruction: 'Schedule another meeting. This will restart the booking process from the beginning.',
-      trigger: 'hover'
-    }
+    // Availability settings
+    { trigger: 'add working hours', action: 'add-working-hours', description: 'Add working hours', element: '[data-action="add-working-hours"]' },
+    { trigger: 'save availability', action: 'save-availability', description: 'Save availability settings', element: '[data-action="save-availability"]' },
+    { trigger: 'add date override', action: 'add-date-override', description: 'Add date override', element: '[data-action="add-date-override"]' },
+
+    // Integration settings
+    { trigger: 'connect google calendar', action: 'connect-google-calendar', description: 'Connect Google Calendar', element: '[data-action="connect-google-calendar"]' },
+    { trigger: 'connect outlook', action: 'connect-outlook', description: 'Connect Outlook', element: '[data-action="connect-outlook"]' },
+    { trigger: 'connect zoom', action: 'connect-zoom', description: 'Connect Zoom', element: '[data-action="connect-zoom"]' },
+    { trigger: 'connect slack', action: 'connect-slack', description: 'Connect Slack', element: '[data-action="connect-slack"]' },
+
+    // Booking form actions
+    { trigger: 'select time slot', action: 'select-time-slot', description: 'Select a time slot', element: '[data-action="select-time-slot"]' },
+    { trigger: 'book appointment', action: 'book-appointment', description: 'Book the appointment', element: '[data-action="book-appointment"]' },
+    { trigger: 'previous date', action: 'prev-date', description: 'Go to previous date', element: '[data-action="prev-date"]' },
+    { trigger: 'next date', action: 'next-date', description: 'Go to next date', element: '[data-action="next-date"]' },
+
+    // General actions
+    { trigger: 'toggle sidebar', action: 'toggle-sidebar', description: 'Toggle sidebar', element: '[data-action="toggle-sidebar"]' },
+    { trigger: 'start training', action: 'start-training', description: 'Start voice training', element: '[data-action="start-training"]' },
+    { trigger: 'help', action: 'help', description: 'Show available voice commands', element: null },
   ];
 
-  useEffect(() => {
-    if ('speechSynthesis' in window) {
-      setSpeechSupported(true);
+  const stopSpeech = () => {
+    if (synthRef.current) {
+      synthRef.current.cancel();
+      setIsSpeaking(false);
     }
-  }, []);
-
-  useEffect(() => {
-    if (!isActive || !speechSupported) return;
-
-    const handleElementInteraction = (e: Event) => {
-      const target = e.target as HTMLElement;
-      const actionElement = target.closest('[data-action]');
-      
-      if (actionElement) {
-        const actionId = actionElement.getAttribute('data-action');
-        
-        // Find matching action by exact match or partial match for dynamic actions
-        const action = trainingActions.find(a => {
-          if (a.element.includes(actionId!)) return true;
-          // Handle dynamic actions like toggle-monday, add-time-slot-tuesday etc
-          if (a.element.includes('*') && actionId!.includes(a.id.replace('toggle-integration', 'toggle-').replace('add-time-slot', 'add-time-slot-'))) return true;
-          return false;
-        });
-        
-        if (action && action.id !== currentAction) {
-          // Stop any existing speech immediately
-          window.speechSynthesis.cancel();
-          setCurrentAction(action.id);
-          speak(action.instruction);
-        }
-      }
-    };
-
-    const handleMouseLeave = (e: Event) => {
-      const target = e.target as HTMLElement;
-      // Only stop if we're leaving an element with data-action
-      if (!target.closest('[data-action]')) {
-        window.speechSynthesis.cancel();
-        setIsPlaying(false);
-        setCurrentAction(null);
-      }
-    };
-
-    document.addEventListener('mouseover', handleElementInteraction);
-    document.addEventListener('mouseleave', handleMouseLeave);
-    document.addEventListener('focus', handleElementInteraction, true);
-
-    return () => {
-      document.removeEventListener('mouseover', handleElementInteraction);
-      document.removeEventListener('mouseleave', handleMouseLeave);
-      document.removeEventListener('focus', handleElementInteraction, true);
-    };
-  }, [isActive, speechSupported, currentAction]);
+  };
 
   const speak = (text: string) => {
-    if (!speechSupported) return;
+    stopSpeech();
     
-    // Always cancel existing speech before starting new one
-    window.speechSynthesis.cancel();
-    
-    // Small delay to ensure previous speech is stopped
-    setTimeout(() => {
+    if ('speechSynthesis' in window) {
+      synthRef.current = window.speechSynthesis;
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.rate = 0.9;
       utterance.pitch = 1;
       utterance.volume = 0.8;
       
-      utterance.onstart = () => setIsPlaying(true);
-      utterance.onend = () => {
-        setIsPlaying(false);
-        setCurrentAction(null);
-      };
-      utterance.onerror = () => {
-        setIsPlaying(false);
-        setCurrentAction(null);
-      };
+      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = () => setIsSpeaking(false);
       
-      window.speechSynthesis.speak(utterance);
-    }, 50);
-  };
-
-  const stopSpeech = () => {
-    window.speechSynthesis.cancel();
-    setIsPlaying(false);
-    setCurrentAction(null);
-  };
-
-  const toggleTraining = () => {
-    if (isActive) {
-      stopSpeech();
-      setIsActive(false);
-    } else {
-      setIsActive(true);
-      speak('Voice training activated. Hover over any element to hear instructions about how to use it.');
+      synthRef.current.speak(utterance);
     }
   };
 
-  if (!speechSupported) {
-    return null;
-  }
+  useEffect(() => {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = true;
+      recognitionRef.current.interimResults = false;
+      recognitionRef.current.lang = 'en-US';
+
+      recognitionRef.current.onresult = (event: any) => {
+        const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
+        setCurrentInstruction(transcript);
+        handleVoiceCommand(transcript);
+      };
+
+      recognitionRef.current.onerror = (event: any) => {
+        console.error('Speech recognition error:', event.error);
+        setIsListening(false);
+      };
+
+      recognitionRef.current.onend = () => {
+        if (isListening) {
+          recognitionRef.current.start();
+        }
+      };
+    }
+
+    // Auto-start listening
+    startListening();
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      stopSpeech();
+    };
+  }, []);
+
+  const handleVoiceCommand = (command: string) => {
+    const instruction = voiceInstructions.find(instr => 
+      command.includes(instr.trigger.toLowerCase())
+    );
+
+    if (instruction) {
+      if (instruction.action === 'help') {
+        const helpText = `Available voice commands: ${voiceInstructions.slice(0, 10).map(i => i.trigger).join(', ')} and many more. Say "help" to hear this again.`;
+        speak(helpText);
+        return;
+      }
+
+      if (instruction.element) {
+        const element = document.querySelector(instruction.element) as HTMLElement;
+        if (element) {
+          element.click();
+          speak(`${instruction.description} activated`);
+        } else {
+          speak(`Sorry, ${instruction.description} is not available on this page`);
+        }
+      } else {
+        speak(instruction.description);
+      }
+    } else {
+      const availableCommands = voiceInstructions
+        .filter(instr => {
+          if (!instr.element) return true;
+          return document.querySelector(instr.element) !== null;
+        })
+        .slice(0, 5)
+        .map(instr => instr.trigger)
+        .join(', ');
+      
+      speak(`Command not recognized. Try: ${availableCommands}`);
+    }
+  };
+
+  const startListening = () => {
+    if (recognitionRef.current && !isListening) {
+      stopSpeech();
+      setIsListening(true);
+      recognitionRef.current.start();
+    }
+  };
+
+  const stopListening = () => {
+    if (recognitionRef.current && isListening) {
+      setIsListening(false);
+      recognitionRef.current.stop();
+    }
+  };
+
+  const getPageSpecificInstructions = () => {
+    const path = location.pathname;
+    const pageInstructions = voiceInstructions.filter(instr => {
+      if (!instr.element) return false;
+      return document.querySelector(instr.element) !== null;
+    });
+
+    return pageInstructions.slice(0, 5);
+  };
+
+  if (!isVisible) return null;
 
   return (
     <div className="fixed bottom-4 right-4 z-50">
-      <Button
-        onClick={toggleTraining}
-        variant={isActive ? "default" : "outline"}
-        size="sm"
-        className="flex items-center space-x-2 shadow-lg"
-        data-action="toggle-voice-training"
-      >
-        {isActive ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
-        <span className="hidden sm:inline">{isActive ? 'Voice On' : 'Voice Off'}</span>
-        {isPlaying && <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />}
-      </Button>
+      <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-4 max-w-xs">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="font-medium text-gray-900 text-sm">Voice Control</h3>
+          <button
+            onClick={() => setIsVisible(false)}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        
+        <div className="flex items-center space-x-2 mb-3">
+          <button
+            onClick={isListening ? stopListening : startListening}
+            className={`p-2 rounded-full transition-colors ${
+              isListening
+                ? 'bg-red-100 text-red-600 hover:bg-red-200'
+                : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
+            }`}
+            data-action="toggle-voice-listening"
+          >
+            {isListening ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
+          </button>
+          
+          <button
+            onClick={stopSpeech}
+            className={`p-2 rounded-full transition-colors ${
+              isSpeaking
+                ? 'bg-orange-100 text-orange-600 hover:bg-orange-200'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+            data-action="stop-voice-speech"
+          >
+            {isSpeaking ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+          </button>
+          
+          <div className="flex-1">
+            <div className={`text-xs px-2 py-1 rounded ${
+              isListening ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
+            }`}>
+              {isListening ? '🎤 Listening...' : '🔇 Not listening'}
+            </div>
+          </div>
+        </div>
+
+        {currentInstruction && (
+          <div className="mb-3 p-2 bg-blue-50 rounded text-xs text-blue-800">
+            Last: "{currentInstruction}"
+          </div>
+        )}
+
+        <div className="space-y-1">
+          <p className="text-xs text-gray-600 font-medium">Try saying:</p>
+          {getPageSpecificInstructions().map((instr, index) => (
+            <p key={index} className="text-xs text-gray-500">
+              "{instr.trigger}"
+            </p>
+          ))}
+          <p className="text-xs text-blue-600 cursor-pointer" onClick={() => speak('Available commands: ' + voiceInstructions.slice(0, 10).map(i => i.trigger).join(', '))}>
+            Say "help" for more commands
+          </p>
+        </div>
+      </div>
     </div>
   );
 };
