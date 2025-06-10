@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Calendar, Clock, Users, TrendingUp, Plus, ArrowRight } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,10 +12,11 @@ interface StatCardProps {
   icon: React.ReactNode;
   trend?: string;
   trendUp?: boolean;
+  onClick?: () => void;
 }
 
-const StatCard: React.FC<StatCardProps> = ({ title, value, icon, trend, trendUp }) => (
-  <Card className="hover:shadow-md transition-shadow">
+const StatCard: React.FC<StatCardProps> = ({ title, value, icon, trend, trendUp, onClick }) => (
+  <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={onClick}>
     <CardContent className="p-6">
       <div className="flex items-center justify-between">
         <div>
@@ -44,6 +46,8 @@ interface UpcomingMeeting {
 }
 
 export const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
+
   const upcomingMeetings: UpcomingMeeting[] = [
     {
       id: '1',
@@ -88,10 +92,15 @@ export const Dashboard: React.FC = () => {
           <div>
             <h2 className="text-2xl font-bold mb-2">Welcome back, Alex!</h2>
             <p className="text-blue-100 mb-4">
-              You have 3 meetings scheduled for today. Voice training is available to help you master VoiceCal.
+              You have 3 meetings scheduled for today.
             </p>
-            <Button variant="secondary" className="bg-white text-blue-600 hover:bg-gray-100">
-              Start Voice Tutorial
+            <Button 
+              variant="secondary" 
+              className="bg-white text-blue-600 hover:bg-gray-100"
+              onClick={() => navigate('/book')}
+              data-action="view-public-booking"
+            >
+              View Public Booking Page
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
@@ -111,11 +120,13 @@ export const Dashboard: React.FC = () => {
           icon={<Calendar className="h-6 w-6" />}
           trend="+12% from last month"
           trendUp={true}
+          onClick={() => navigate('/bookings')}
         />
         <StatCard
           title="Event Types"
           value="5"
           icon={<Clock className="h-6 w-6" />}
+          onClick={() => navigate('/events')}
         />
         <StatCard
           title="This Week"
@@ -123,6 +134,7 @@ export const Dashboard: React.FC = () => {
           icon={<Users className="h-6 w-6" />}
           trend="+5 from last week"
           trendUp={true}
+          onClick={() => navigate('/calendar')}
         />
         <StatCard
           title="Conversion Rate"
@@ -130,6 +142,7 @@ export const Dashboard: React.FC = () => {
           icon={<TrendingUp className="h-6 w-6" />}
           trend="+2% improvement"
           trendUp={true}
+          onClick={() => navigate('/analytics')}
         />
       </div>
 
@@ -139,14 +152,14 @@ export const Dashboard: React.FC = () => {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>Upcoming Meetings</span>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={() => navigate('/bookings')}>
                 View All
               </Button>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {upcomingMeetings.map((meeting) => (
-              <div key={meeting.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div key={meeting.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
                 <div className="flex-1">
                   <h4 className="font-medium text-gray-900">{meeting.title}</h4>
                   <p className="text-sm text-gray-600">{meeting.attendee}</p>
@@ -169,32 +182,39 @@ export const Dashboard: React.FC = () => {
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button className="w-full justify-start" variant="outline">
+            <Button 
+              className="w-full justify-start" 
+              variant="outline"
+              onClick={() => navigate('/events')}
+              data-action="create-new-event"
+            >
               <Plus className="mr-2 h-4 w-4" />
               Create New Event Type
             </Button>
-            <Button className="w-full justify-start" variant="outline">
+            <Button 
+              className="w-full justify-start" 
+              variant="outline"
+              onClick={() => navigate('/calendar')}
+            >
               <Calendar className="mr-2 h-4 w-4" />
               View Calendar
             </Button>
-            <Button className="w-full justify-start" variant="outline">
+            <Button 
+              className="w-full justify-start" 
+              variant="outline"
+              onClick={() => navigate('/bookings')}
+            >
               <Users className="mr-2 h-4 w-4" />
               Manage Bookings
             </Button>
-            <Button className="w-full justify-start" variant="outline">
+            <Button 
+              className="w-full justify-start" 
+              variant="outline"
+              onClick={() => navigate('/analytics')}
+            >
               <TrendingUp className="mr-2 h-4 w-4" />
               View Analytics
             </Button>
-            
-            <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <h4 className="font-medium text-blue-900 mb-2">Voice-Guided Help</h4>
-              <p className="text-sm text-blue-700 mb-3">
-                Learn how to use any feature with voice instructions
-              </p>
-              <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-700">
-                Activate Voice Guide
-              </Button>
-            </div>
           </CardContent>
         </Card>
       </div>

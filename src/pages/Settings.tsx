@@ -1,8 +1,13 @@
+
 import React, { useState } from 'react';
 import { Layout } from '../components/Layout';
 import { Settings as SettingsIcon, User, Calendar, Bell, Shield, Palette, Globe, Zap } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import AvailabilitySettings from '../components/AvailabilitySettings';
 import IntegrationSettings from '../components/IntegrationSettings';
 
@@ -12,8 +17,26 @@ const ProfileSettings = () => (
       <CardHeader>
         <CardTitle>Profile Information</CardTitle>
       </CardHeader>
-      <CardContent>
-        <p>Profile settings content...</p>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="firstName">First Name</Label>
+            <Input id="firstName" placeholder="Alex" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="lastName">Last Name</Label>
+            <Input id="lastName" placeholder="Smith" />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input id="email" type="email" placeholder="alex@example.com" />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="bio">Bio</Label>
+          <Input id="bio" placeholder="Tell people about yourself..." />
+        </div>
+        <Button>Save Changes</Button>
       </CardContent>
     </Card>
   </div>
@@ -25,8 +48,29 @@ const NotificationSettings = () => (
       <CardHeader>
         <CardTitle>Notification Preferences</CardTitle>
       </CardHeader>
-      <CardContent>
-        <p>Notification settings content...</p>
+      <CardContent className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label>Email Notifications</Label>
+            <p className="text-sm text-gray-500">Receive booking confirmations via email</p>
+          </div>
+          <Switch />
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label>SMS Notifications</Label>
+            <p className="text-sm text-gray-500">Receive booking reminders via SMS</p>
+          </div>
+          <Switch />
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label>Calendar Reminders</Label>
+            <p className="text-sm text-gray-500">Send reminders to attendees</p>
+          </div>
+          <Switch defaultChecked />
+        </div>
+        <Button>Save Preferences</Button>
       </CardContent>
     </Card>
   </div>
@@ -38,8 +82,27 @@ const SecuritySettings = () => (
       <CardHeader>
         <CardTitle>Security Settings</CardTitle>
       </CardHeader>
-      <CardContent>
-        <p>Security settings content...</p>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="currentPassword">Current Password</Label>
+          <Input id="currentPassword" type="password" />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="newPassword">New Password</Label>
+          <Input id="newPassword" type="password" />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="confirmPassword">Confirm Password</Label>
+          <Input id="confirmPassword" type="password" />
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label>Two-Factor Authentication</Label>
+            <p className="text-sm text-gray-500">Add an extra layer of security</p>
+          </div>
+          <Switch />
+        </div>
+        <Button>Update Security</Button>
       </CardContent>
     </Card>
   </div>
@@ -51,8 +114,25 @@ const AppearanceSettings = () => (
       <CardHeader>
         <CardTitle>Appearance Preferences</CardTitle>
       </CardHeader>
-      <CardContent>
-        <p>Appearance settings content...</p>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label>Theme</Label>
+          <div className="flex space-x-2">
+            <Button variant="outline" size="sm">Light</Button>
+            <Button variant="outline" size="sm">Dark</Button>
+            <Button variant="outline" size="sm">System</Button>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label>Brand Color</Label>
+          <div className="flex space-x-2">
+            <div className="w-8 h-8 bg-blue-600 rounded cursor-pointer"></div>
+            <div className="w-8 h-8 bg-green-600 rounded cursor-pointer"></div>
+            <div className="w-8 h-8 bg-purple-600 rounded cursor-pointer"></div>
+            <div className="w-8 h-8 bg-red-600 rounded cursor-pointer"></div>
+          </div>
+        </div>
+        <Button>Save Appearance</Button>
       </CardContent>
     </Card>
   </div>
@@ -132,8 +212,20 @@ const Settings = () => {
                 <CardHeader>
                   <CardTitle>Advanced Settings</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p>Advanced configuration options...</p>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="webhook">Webhook URL</Label>
+                    <Input id="webhook" placeholder="https://your-site.com/webhook" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="timezone">Default Timezone</Label>
+                    <select className="w-full p-2 border border-gray-300 rounded-md">
+                      <option>UTC-8 (Pacific Time)</option>
+                      <option>UTC-5 (Eastern Time)</option>
+                      <option>UTC+0 (GMT)</option>
+                    </select>
+                  </div>
+                  <Button>Save Advanced Settings</Button>
                 </CardContent>
               </Card>
             </div>

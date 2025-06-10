@@ -3,7 +3,6 @@ import React from 'react';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from './AppSidebar';
 import { Header } from './Header';
-import { VoiceTrainer } from './VoiceTrainer';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -20,7 +19,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             {children}
           </main>
         </SidebarInset>
-        <VoiceTrainer />
       </div>
     </SidebarProvider>
   );

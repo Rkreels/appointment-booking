@@ -8,7 +8,6 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -77,17 +76,17 @@ export const AppSidebar: React.FC = () => {
       
       <SidebarFooter className="p-4">
         <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 group-data-[collapsible=icon]:p-2">
-          <h3 className="font-medium text-gray-900 mb-2 group-data-[collapsible=icon]:hidden">Voice Training</h3>
+          <h3 className="font-medium text-gray-900 mb-2 group-data-[collapsible=icon]:hidden">Quick Access</h3>
           <p className="text-sm text-gray-600 mb-3 group-data-[collapsible=icon]:hidden">
-            Learn VoiceCal with guided voice instructions
+            Manage your bookings and settings
           </p>
-          <button 
-            data-action="start-training"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm py-2 px-3 rounded transition-colors group-data-[collapsible=icon]:px-2"
+          <Link 
+            to="/book"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm py-2 px-3 rounded transition-colors group-data-[collapsible=icon]:px-2 flex items-center justify-center"
           >
-            <span className="group-data-[collapsible=icon]:hidden">Start Tutorial</span>
-            <span className="group-data-[collapsible=icon]:block hidden">🎤</span>
-          </button>
+            <span className="group-data-[collapsible=icon]:hidden">Public Booking</span>
+            <span className="group-data-[collapsible=icon]:block hidden">📅</span>
+          </Link>
         </div>
       </SidebarFooter>
     </Sidebar>
