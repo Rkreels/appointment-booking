@@ -66,13 +66,15 @@ const VoiceTrainer: React.FC = () => {
   ];
 
   useEffect(() => {
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    // Check for speech recognition support
+    const SpeechRecognitionConstructor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    
+    if (!SpeechRecognitionConstructor) {
       console.log('Speech recognition not supported');
       return;
     }
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognitionInstance = new SpeechRecognition();
+    const recognitionInstance = new SpeechRecognitionConstructor() as SpeechRecognition;
     
     recognitionInstance.continuous = true;
     recognitionInstance.interimResults = false;
@@ -89,7 +91,11 @@ const VoiceTrainer: React.FC = () => {
       // Restart listening
       setTimeout(() => {
         if (recognitionInstance) {
-          recognitionInstance.start();
+          try {
+            recognitionInstance.start();
+          } catch (error) {
+            console.error('Error restarting recognition:', error);
+          }
         }
       }, 1000);
     };
@@ -106,17 +112,30 @@ const VoiceTrainer: React.FC = () => {
         setIsListening(false);
         setTimeout(() => {
           if (recognitionInstance) {
-            recognitionInstance.start();
+            try {
+              recognitionInstance.start();
+            } catch (error) {
+              console.error('Error restarting after error:', error);
+            }
           }
         }, 2000);
       }
     };
 
     setRecognition(recognitionInstance);
-    recognitionInstance.start();
+    
+    try {
+      recognitionInstance.start();
+    } catch (error) {
+      console.error('Error starting recognition:', error);
+    }
 
     return () => {
-      recognitionInstance.stop();
+      try {
+        recognitionInstance.stop();
+      } catch (error) {
+        console.error('Error stopping recognition:', error);
+      }
     };
   }, []);
 
