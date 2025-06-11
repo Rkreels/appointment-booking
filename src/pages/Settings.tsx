@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { Layout } from '../components/Layout';
-import { Settings as SettingsIcon, User, Calendar, Bell, Shield, Palette, Globe, Zap } from 'lucide-react';
+import { Settings as SettingsIcon, User, Calendar, Bell, Shield, Palette, Globe, Zap, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,7 @@ import { useAuth } from '../hooks/useAuth';
 import { Badge } from '@/components/ui/badge';
 import AvailabilitySettings from '../components/AvailabilitySettings';
 import IntegrationSettings from '../components/IntegrationSettings';
+import AccessControl from '../components/AccessControl';
 import ProtectedRoute from '../components/ProtectedRoute';
 
 const ProfileSettings = () => {
@@ -162,7 +164,7 @@ const Settings = () => {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-7">
+          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8">
             <TabsTrigger value="profile" className="flex items-center space-x-2" data-action="profile-settings">
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">Profile</span>
@@ -187,6 +189,12 @@ const Settings = () => {
               <Palette className="h-4 w-4" />
               <span className="hidden sm:inline">Appearance</span>
             </TabsTrigger>
+            {hasPermission('manage_users') && (
+              <TabsTrigger value="access" className="flex items-center space-x-2" data-action="access-control-settings">
+                <Users className="h-4 w-4" />
+                <span className="hidden sm:inline">Access</span>
+              </TabsTrigger>
+            )}
             {hasPermission('manage_settings') && (
               <TabsTrigger value="advanced" className="flex items-center space-x-2" data-action="advanced-settings">
                 <Globe className="h-4 w-4" />
@@ -219,6 +227,12 @@ const Settings = () => {
 
           <TabsContent value="appearance">
             <AppearanceSettings />
+          </TabsContent>
+
+          <TabsContent value="access">
+            <ProtectedRoute requiredPermission="manage_users">
+              <AccessControl />
+            </ProtectedRoute>
           </TabsContent>
 
           <TabsContent value="advanced">

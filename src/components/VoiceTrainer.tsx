@@ -13,6 +13,7 @@ const VoiceTrainer: React.FC = () => {
   const location = useLocation();
   const [isListening, setIsListening] = useState(false);
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
+  const [isSupported, setIsSupported] = useState(false);
 
   // Comprehensive voice commands for all functionalities
   const voiceCommands: VoiceCommand[] = [
@@ -44,7 +45,13 @@ const VoiceTrainer: React.FC = () => {
     { action: 'integration settings', element: '[data-action="integration-settings"]', description: 'Setup integrations' },
     { action: 'security settings', element: '[data-action="security-settings"]', description: 'Security options' },
     { action: 'appearance settings', element: '[data-action="appearance-settings"]', description: 'Customize appearance' },
+    { action: 'access control settings', element: '[data-action="access-control-settings"]', description: 'Manage user access' },
     { action: 'advanced settings', element: '[data-action="advanced-settings"]', description: 'Advanced configuration' },
+    
+    // Access control commands
+    { action: 'add user', element: '[data-action="add-user"]', description: 'Add new user' },
+    { action: 'save new user', element: '[data-action="save-new-user"]', description: 'Save new user' },
+    { action: 'cancel add user', element: '[data-action="cancel-add-user"]', description: 'Cancel adding user' },
     
     // User menu actions
     { action: 'profile', element: '[data-action="profile"]', description: 'View profile' },
@@ -67,14 +74,16 @@ const VoiceTrainer: React.FC = () => {
 
   useEffect(() => {
     // Check for speech recognition support
-    const SpeechRecognitionConstructor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRecognitionClass = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     
-    if (!SpeechRecognitionConstructor) {
-      console.log('Speech recognition not supported');
+    if (!SpeechRecognitionClass) {
+      console.log('Speech recognition not supported in this browser');
+      setIsSupported(false);
       return;
     }
 
-    const recognitionInstance = new SpeechRecognitionConstructor() as SpeechRecognition;
+    setIsSupported(true);
+    const recognitionInstance = new SpeechRecognitionClass() as SpeechRecognition;
     
     recognitionInstance.continuous = true;
     recognitionInstance.interimResults = false;
@@ -88,34 +97,34 @@ const VoiceTrainer: React.FC = () => {
     recognitionInstance.onend = () => {
       console.log('Voice recognition ended');
       setIsListening(false);
-      // Restart listening
+      // Restart listening after a brief pause
       setTimeout(() => {
-        if (recognitionInstance) {
+        if (recognitionInstance && isSupported) {
           try {
             recognitionInstance.start();
           } catch (error) {
-            console.error('Error restarting recognition:', error);
+            console.log('Cannot restart recognition:', error);
           }
         }
       }, 1000);
     };
 
-    recognitionInstance.onresult = (event) => {
+    recognitionInstance.onresult = (event: SpeechRecognitionEvent) => {
       const command = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
-      console.log('Voice command:', command);
+      console.log('Voice command received:', command);
       handleVoiceCommand(command);
     };
 
-    recognitionInstance.onerror = (event) => {
-      console.error('Speech recognition error:', event.error);
-      if (event.error !== 'no-speech') {
+    recognitionInstance.onerror = (event: SpeechRecognitionErrorEvent) => {
+      console.log('Speech recognition error:', event.error);
+      if (event.error !== 'no-speech' && event.error !== 'audio-capture') {
         setIsListening(false);
         setTimeout(() => {
-          if (recognitionInstance) {
+          if (recognitionInstance && isSupported) {
             try {
               recognitionInstance.start();
             } catch (error) {
-              console.error('Error restarting after error:', error);
+              console.log('Cannot restart after error:', error);
             }
           }
         }, 2000);
@@ -124,17 +133,21 @@ const VoiceTrainer: React.FC = () => {
 
     setRecognition(recognitionInstance);
     
+    // Start recognition
     try {
       recognitionInstance.start();
+      console.log('Voice recognition initialized and started');
     } catch (error) {
-      console.error('Error starting recognition:', error);
+      console.log('Error starting recognition:', error);
     }
 
     return () => {
       try {
-        recognitionInstance.stop();
+        if (recognitionInstance) {
+          recognitionInstance.stop();
+        }
       } catch (error) {
-        console.error('Error stopping recognition:', error);
+        console.log('Error stopping recognition:', error);
       }
     };
   }, []);
@@ -149,17 +162,20 @@ const VoiceTrainer: React.FC = () => {
     }
 
     if (command.includes('scroll up')) {
-      window.scrollBy(0, -300);
+      window.scrollBy({ top: -300, behavior: 'smooth' });
+      speak('Scrolling up');
       return;
     }
 
     if (command.includes('scroll down')) {
-      window.scrollBy(0, 300);
+      window.scrollBy({ top: 300, behavior: 'smooth' });
+      speak('Scrolling down');
       return;
     }
 
     if (command.includes('go back') || command.includes('back') || command.includes('previous')) {
       window.history.back();
+      speak('Going back');
       return;
     }
 
@@ -178,34 +194,40 @@ const VoiceTrainer: React.FC = () => {
         // Handle different element types
         if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
           element.focus();
+          speak(`Focused on ${matchedCommand.action}`);
         } else if (element.tagName === 'A' || element.tagName === 'BUTTON') {
           element.click();
+          speak(`${matchedCommand.description} activated`);
         } else {
           // Try to find a clickable child element
           const clickable = element.querySelector('a, button') as HTMLElement;
           if (clickable) {
             clickable.click();
+            speak(`${matchedCommand.description} activated`);
           } else {
             element.click();
+            speak(`${matchedCommand.description} activated`);
           }
         }
-        
-        // Provide audio feedback
-        speak(`${matchedCommand.description} activated`);
       } else {
+        console.log(`Element not found for command: ${matchedCommand.action}`);
         speak(`Sorry, ${matchedCommand.action} is not available on this page`);
       }
     } else {
+      console.log('Command not recognized:', command);
       speak('Command not recognized. Say "help" to see available commands.');
     }
   };
 
   const speak = (text: string) => {
     if ('speechSynthesis' in window) {
+      // Cancel any existing speech
+      speechSynthesis.cancel();
+      
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.8;
+      utterance.rate = 0.9;
       utterance.pitch = 1;
-      utterance.volume = 0.5;
+      utterance.volume = 0.7;
       speechSynthesis.speak(utterance);
     }
   };
@@ -217,18 +239,30 @@ const VoiceTrainer: React.FC = () => {
     });
 
     console.log('Available voice commands:', pageSpecificCommands.map(cmd => cmd.action));
-    speak(`Available commands: ${pageSpecificCommands.slice(0, 5).map(cmd => cmd.action).join(', ')}. And more.`);
+    const commandList = pageSpecificCommands.slice(0, 6).map(cmd => cmd.action).join(', ');
+    speak(`Available commands include: ${commandList}, and more. Check the console for a full list.`);
   };
 
   // Auto-announce page changes and available commands
   useEffect(() => {
+    if (!isSupported) return;
+
     const timer = setTimeout(() => {
       const pageName = location.pathname === '/' ? 'dashboard' : location.pathname.substring(1);
-      speak(`${pageName} page loaded. Voice commands are active.`);
-    }, 1000);
+      speak(`${pageName} page loaded. Voice commands are active. Say "help" for available commands.`);
+    }, 1500);
 
     return () => clearTimeout(timer);
-  }, [location]);
+  }, [location, isSupported]);
+
+  // Show voice status indicator in console
+  useEffect(() => {
+    if (isSupported) {
+      console.log(`Voice Training Status: ${isListening ? 'Listening...' : 'Ready'}`);
+    } else {
+      console.log('Voice Training: Not supported in this browser');
+    }
+  }, [isListening, isSupported]);
 
   return null; // This component doesn't render anything visible
 };
