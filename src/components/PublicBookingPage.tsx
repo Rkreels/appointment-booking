@@ -1,5 +1,5 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { Calendar, Clock, User, Mail, Phone, MessageCircle, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,7 @@ interface EventType {
   duration: number;
   description: string;
   color: string;
+  allowedUsers?: string[];
 }
 
 interface BookingFormData {
@@ -25,11 +26,23 @@ interface BookingFormData {
   timezone: string;
 }
 
+interface UserConfig {
+  name: string;
+  title: string;
+  allowedEvents: number[];
+  customMessage?: string;
+}
+
 const PublicBookingPage: React.FC = () => {
+  const { eventId } = useParams();
+  const [searchParams] = useSearchParams();
+  const userPath = searchParams.get('user');
+  
   const [step, setStep] = useState<'select-event' | 'select-time' | 'booking-form' | 'confirmation'>('select-event');
   const [selectedEvent, setSelectedEvent] = useState<EventType | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState<string>('');
+  const [userConfig, setUserConfig] = useState<UserConfig | null>(null);
   const [formData, setFormData] = useState<BookingFormData>({
     name: '',
     email: '',
@@ -38,13 +51,14 @@ const PublicBookingPage: React.FC = () => {
     timezone: 'America/New_York'
   });
 
-  const eventTypes: EventType[] = [
+  const allEventTypes: EventType[] = [
     {
       id: 1,
       name: '30-min Consultation',
       duration: 30,
       description: 'One-on-one consultation for project planning and strategy.',
-      color: 'bg-blue-500'
+      color: 'bg-blue-500',
+      allowedUsers: ['john-doe', 'premium-users']
     },
     {
       id: 2,
@@ -61,6 +75,50 @@ const PublicBookingPage: React.FC = () => {
       color: 'bg-orange-500'
     }
   ];
+
+  // Mock user configurations
+  const userConfigs: Record<string, UserConfig> = {
+    'john-doe': {
+      name: 'John Doe',
+      title: 'Senior Consultant',
+      allowedEvents: [1, 3],
+      customMessage: 'Book a session with John for personalized consulting.'
+    },
+    'premium-users': {
+      name: 'Premium Support',
+      title: 'Exclusive Access',
+      allowedEvents: [1, 2],
+      customMessage: 'Premium users get access to extended consultation sessions.'
+    }
+  };
+
+  useEffect(() => {
+    if (userPath && userConfigs[userPath]) {
+      setUserConfig(userConfigs[userPath]);
+    }
+
+    // If eventId is provided, find and auto-select the event
+    if (eventId) {
+      const event = allEventTypes.find(e => e.id.toString() === eventId);
+      if (event) {
+        // Check if user is allowed to book this event
+        if (userConfig && !userConfig.allowedEvents.includes(event.id)) {
+          // Redirect to event selection if not allowed
+          setStep('select-event');
+        } else {
+          setSelectedEvent(event);
+          setStep('select-time');
+        }
+      }
+    }
+  }, [eventId, userPath, userConfig]);
+
+  const getAvailableEvents = () => {
+    if (userConfig) {
+      return allEventTypes.filter(event => userConfig.allowedEvents.includes(event.id));
+    }
+    return allEventTypes;
+  };
 
   const timeSlots = [
     '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
@@ -97,6 +155,8 @@ const PublicBookingPage: React.FC = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const eventTypes = getAvailableEvents();
+
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-4xl mx-auto">
@@ -106,36 +166,53 @@ const PublicBookingPage: React.FC = () => {
             <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
               <Calendar className="h-6 w-6 text-white" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900">Schedule a Meeting</h1>
+            <h1 className="text-3xl font-bold text-gray-900">
+              {userConfig ? `Schedule with ${userConfig.name}` : 'Schedule a Meeting'}
+            </h1>
           </div>
-          <p className="text-gray-600">Choose a time that works best for you</p>
+          <p className="text-gray-600">
+            {userConfig ? userConfig.customMessage : 'Choose a time that works best for you'}
+          </p>
+          {userConfig && (
+            <p className="text-sm text-gray-500 mt-2">
+              {userConfig.title}
+            </p>
+          )}
         </div>
 
         {step === 'select-event' && (
           <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-center mb-6">Select Event Type</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {eventTypes.map((event) => (
-                <Card 
-                  key={event.id} 
-                  className="cursor-pointer hover:shadow-lg transition-shadow"
-                  onClick={() => handleEventSelect(event)}
-                  data-action="select-event-type"
-                >
-                  <CardContent className="p-6">
-                    <div className="flex items-center space-x-3 mb-4">
-                      <div className={`w-4 h-4 rounded-full ${event.color}`} />
-                      <h3 className="font-semibold text-lg">{event.name}</h3>
-                    </div>
-                    <div className="flex items-center space-x-2 mb-3">
-                      <Clock className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm text-gray-600">{event.duration} minutes</span>
-                    </div>
-                    <p className="text-sm text-gray-600">{event.description}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            <h2 className="text-xl font-semibold text-center mb-6">
+              {userConfig ? `Available Sessions with ${userConfig.name}` : 'Select Event Type'}
+            </h2>
+            {eventTypes.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-500">No events available for this configuration.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {eventTypes.map((event) => (
+                  <Card 
+                    key={event.id} 
+                    className="cursor-pointer hover:shadow-lg transition-shadow"
+                    onClick={() => handleEventSelect(event)}
+                    data-action="select-event-type"
+                  >
+                    <CardContent className="p-6">
+                      <div className="flex items-center space-x-3 mb-4">
+                        <div className={`w-4 h-4 rounded-full ${event.color}`} />
+                        <h3 className="font-semibold text-lg">{event.name}</h3>
+                      </div>
+                      <div className="flex items-center space-x-2 mb-3">
+                        <Clock className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm text-gray-600">{event.duration} minutes</span>
+                      </div>
+                      <p className="text-sm text-gray-600">{event.description}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

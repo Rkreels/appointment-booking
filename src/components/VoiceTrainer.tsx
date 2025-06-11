@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -14,6 +13,7 @@ const VoiceTrainer: React.FC = () => {
   const [isListening, setIsListening] = useState(false);
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
   const [isSupported, setIsSupported] = useState(false);
+  const [hasUserInteracted, setHasUserInteracted] = useState(false);
 
   // Comprehensive voice commands for all functionalities
   const voiceCommands: VoiceCommand[] = [
@@ -37,6 +37,7 @@ const VoiceTrainer: React.FC = () => {
     // Dashboard quick actions
     { action: 'create new event', element: '[data-action="create-new-event"]', description: 'Create new event type' },
     { action: 'view public booking', element: '[data-action="view-public-booking"]', description: 'View public booking page' },
+    { action: 'share booking link', element: '[data-action="share-booking-link"]', description: 'Share public booking link' },
     
     // Settings tabs
     { action: 'profile settings', element: '[data-action="profile-settings"]', description: 'Open profile settings' },
@@ -72,7 +73,30 @@ const VoiceTrainer: React.FC = () => {
     { action: 'go back', element: '', description: 'Navigate back', alternatives: ['back', 'previous'] },
   ];
 
+  // Setup user interaction listener
   useEffect(() => {
+    const handleUserInteraction = () => {
+      if (!hasUserInteracted) {
+        setHasUserInteracted(true);
+        console.log('User interaction detected, voice training will start');
+      }
+    };
+
+    // Listen for various user interactions
+    document.addEventListener('click', handleUserInteraction, { once: true });
+    document.addEventListener('keydown', handleUserInteraction, { once: true });
+    document.addEventListener('touchstart', handleUserInteraction, { once: true });
+
+    return () => {
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('keydown', handleUserInteraction);
+      document.removeEventListener('touchstart', handleUserInteraction);
+    };
+  }, [hasUserInteracted]);
+
+  useEffect(() => {
+    if (!hasUserInteracted) return;
+
     // Check for speech recognition support
     const SpeechRecognitionClass = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     
@@ -150,7 +174,7 @@ const VoiceTrainer: React.FC = () => {
         console.log('Error stopping recognition:', error);
       }
     };
-  }, []);
+  }, [hasUserInteracted]);
 
   const handleVoiceCommand = (command: string) => {
     console.log('Processing voice command:', command);
@@ -245,7 +269,7 @@ const VoiceTrainer: React.FC = () => {
 
   // Auto-announce page changes and available commands
   useEffect(() => {
-    if (!isSupported) return;
+    if (!isSupported || !hasUserInteracted) return;
 
     const timer = setTimeout(() => {
       const pageName = location.pathname === '/' ? 'dashboard' : location.pathname.substring(1);
@@ -253,16 +277,18 @@ const VoiceTrainer: React.FC = () => {
     }, 1500);
 
     return () => clearTimeout(timer);
-  }, [location, isSupported]);
+  }, [location, isSupported, hasUserInteracted]);
 
   // Show voice status indicator in console
   useEffect(() => {
-    if (isSupported) {
+    if (isSupported && hasUserInteracted) {
       console.log(`Voice Training Status: ${isListening ? 'Listening...' : 'Ready'}`);
+    } else if (!hasUserInteracted) {
+      console.log('Voice Training: Waiting for user interaction...');
     } else {
       console.log('Voice Training: Not supported in this browser');
     }
-  }, [isListening, isSupported]);
+  }, [isListening, isSupported, hasUserInteracted]);
 
   return null; // This component doesn't render anything visible
 };
