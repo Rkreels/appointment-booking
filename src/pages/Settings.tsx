@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Layout } from '../components/Layout';
 import { Settings as SettingsIcon, User, Calendar, Bell, Shield, Palette, Globe, Zap } from 'lucide-react';
@@ -8,39 +7,49 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { useAuth } from '../hooks/useAuth';
+import { Badge } from '@/components/ui/badge';
 import AvailabilitySettings from '../components/AvailabilitySettings';
 import IntegrationSettings from '../components/IntegrationSettings';
+import ProtectedRoute from '../components/ProtectedRoute';
 
-const ProfileSettings = () => (
-  <div className="space-y-6">
-    <Card>
-      <CardHeader>
-        <CardTitle>Profile Information</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="firstName">First Name</Label>
-            <Input id="firstName" placeholder="Alex" />
+const ProfileSettings = () => {
+  const { user } = useAuth();
+  
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            Profile Information
+            <Badge variant="outline">{user?.role}</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="firstName">First Name</Label>
+              <Input id="firstName" defaultValue={user?.name.split(' ')[0]} data-action="edit-first-name" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="lastName">Last Name</Label>
+              <Input id="lastName" defaultValue={user?.name.split(' ')[1]} data-action="edit-last-name" />
+            </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="lastName">Last Name</Label>
-            <Input id="lastName" placeholder="Smith" />
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" type="email" defaultValue={user?.email} data-action="edit-email" />
           </div>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" placeholder="alex@example.com" />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="bio">Bio</Label>
-          <Input id="bio" placeholder="Tell people about yourself..." />
-        </div>
-        <Button>Save Changes</Button>
-      </CardContent>
-    </Card>
-  </div>
-);
+          <div className="space-y-2">
+            <Label htmlFor="bio">Bio</Label>
+            <Input id="bio" placeholder="Tell people about yourself..." data-action="edit-bio" />
+          </div>
+          <Button data-action="save-profile">Save Changes</Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
 
 const NotificationSettings = () => (
   <div className="space-y-6">
@@ -54,23 +63,23 @@ const NotificationSettings = () => (
             <Label>Email Notifications</Label>
             <p className="text-sm text-gray-500">Receive booking confirmations via email</p>
           </div>
-          <Switch />
+          <Switch data-action="toggle-email-notifications" />
         </div>
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <Label>SMS Notifications</Label>
             <p className="text-sm text-gray-500">Receive booking reminders via SMS</p>
           </div>
-          <Switch />
+          <Switch data-action="toggle-sms-notifications" />
         </div>
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <Label>Calendar Reminders</Label>
             <p className="text-sm text-gray-500">Send reminders to attendees</p>
           </div>
-          <Switch defaultChecked />
+          <Switch defaultChecked data-action="toggle-calendar-reminders" />
         </div>
-        <Button>Save Preferences</Button>
+        <Button data-action="save-notification-preferences">Save Preferences</Button>
       </CardContent>
     </Card>
   </div>
@@ -85,24 +94,24 @@ const SecuritySettings = () => (
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="currentPassword">Current Password</Label>
-          <Input id="currentPassword" type="password" />
+          <Input id="currentPassword" type="password" data-action="edit-current-password" />
         </div>
         <div className="space-y-2">
           <Label htmlFor="newPassword">New Password</Label>
-          <Input id="newPassword" type="password" />
+          <Input id="newPassword" type="password" data-action="edit-new-password" />
         </div>
         <div className="space-y-2">
           <Label htmlFor="confirmPassword">Confirm Password</Label>
-          <Input id="confirmPassword" type="password" />
+          <Input id="confirmPassword" type="password" data-action="edit-confirm-password" />
         </div>
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <Label>Two-Factor Authentication</Label>
             <p className="text-sm text-gray-500">Add an extra layer of security</p>
           </div>
-          <Switch />
+          <Switch data-action="toggle-2fa" />
         </div>
-        <Button>Update Security</Button>
+        <Button data-action="update-security">Update Security</Button>
       </CardContent>
     </Card>
   </div>
@@ -118,27 +127,29 @@ const AppearanceSettings = () => (
         <div className="space-y-2">
           <Label>Theme</Label>
           <div className="flex space-x-2">
-            <Button variant="outline" size="sm">Light</Button>
-            <Button variant="outline" size="sm">Dark</Button>
-            <Button variant="outline" size="sm">System</Button>
+            <Button variant="outline" size="sm" data-action="theme-light">Light</Button>
+            <Button variant="outline" size="sm" data-action="theme-dark">Dark</Button>
+            <Button variant="outline" size="sm" data-action="theme-system">System</Button>
           </div>
         </div>
         <div className="space-y-2">
           <Label>Brand Color</Label>
           <div className="flex space-x-2">
-            <div className="w-8 h-8 bg-blue-600 rounded cursor-pointer"></div>
-            <div className="w-8 h-8 bg-green-600 rounded cursor-pointer"></div>
-            <div className="w-8 h-8 bg-purple-600 rounded cursor-pointer"></div>
-            <div className="w-8 h-8 bg-red-600 rounded cursor-pointer"></div>
+            <div className="w-8 h-8 bg-blue-600 rounded cursor-pointer" data-action="color-blue"></div>
+            <div className="w-8 h-8 bg-green-600 rounded cursor-pointer" data-action="color-green"></div>
+            <div className="w-8 h-8 bg-purple-600 rounded cursor-pointer" data-action="color-purple"></div>
+            <div className="w-8 h-8 bg-red-600 rounded cursor-pointer" data-action="color-red"></div>
           </div>
         </div>
-        <Button>Save Appearance</Button>
+        <Button data-action="save-appearance">Save Appearance</Button>
       </CardContent>
     </Card>
   </div>
 );
 
 const Settings = () => {
+  const { hasPermission } = useAuth();
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -176,10 +187,12 @@ const Settings = () => {
               <Palette className="h-4 w-4" />
               <span className="hidden sm:inline">Appearance</span>
             </TabsTrigger>
-            <TabsTrigger value="advanced" className="flex items-center space-x-2" data-action="advanced-settings">
-              <Globe className="h-4 w-4" />
-              <span className="hidden sm:inline">Advanced</span>
-            </TabsTrigger>
+            {hasPermission('manage_settings') && (
+              <TabsTrigger value="advanced" className="flex items-center space-x-2" data-action="advanced-settings">
+                <Globe className="h-4 w-4" />
+                <span className="hidden sm:inline">Advanced</span>
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="profile">
@@ -195,7 +208,9 @@ const Settings = () => {
           </TabsContent>
 
           <TabsContent value="integrations">
-            <IntegrationSettings />
+            <ProtectedRoute requiredPermission="manage_settings">
+              <IntegrationSettings />
+            </ProtectedRoute>
           </TabsContent>
 
           <TabsContent value="security">
@@ -207,28 +222,30 @@ const Settings = () => {
           </TabsContent>
 
           <TabsContent value="advanced">
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Advanced Settings</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="webhook">Webhook URL</Label>
-                    <Input id="webhook" placeholder="https://your-site.com/webhook" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="timezone">Default Timezone</Label>
-                    <select className="w-full p-2 border border-gray-300 rounded-md">
-                      <option>UTC-8 (Pacific Time)</option>
-                      <option>UTC-5 (Eastern Time)</option>
-                      <option>UTC+0 (GMT)</option>
-                    </select>
-                  </div>
-                  <Button>Save Advanced Settings</Button>
-                </CardContent>
-              </Card>
-            </div>
+            <ProtectedRoute requiredPermission="manage_settings">
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Advanced Settings</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="webhook">Webhook URL</Label>
+                      <Input id="webhook" placeholder="https://your-site.com/webhook" data-action="edit-webhook" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="timezone">Default Timezone</Label>
+                      <select className="w-full p-2 border border-gray-300 rounded-md" data-action="select-timezone">
+                        <option>UTC-8 (Pacific Time)</option>
+                        <option>UTC-5 (Eastern Time)</option>
+                        <option>UTC+0 (GMT)</option>
+                      </select>
+                    </div>
+                    <Button data-action="save-advanced-settings">Save Advanced Settings</Button>
+                  </CardContent>
+                </Card>
+              </div>
+            </ProtectedRoute>
           </TabsContent>
         </Tabs>
       </div>
