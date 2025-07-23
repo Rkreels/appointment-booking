@@ -31,9 +31,9 @@ export const Header: React.FC = () => {
   const { toast } = useToast();
 
   const searchResults = [
-    { id: 1, title: '30-min Consultation', type: 'Event Type', action: () => console.log('Navigate to event') },
-    { id: 2, title: 'Sarah Johnson Meeting', type: 'Booking', action: () => console.log('Navigate to booking') },
-    { id: 3, title: 'Calendar Settings', type: 'Settings', action: () => console.log('Navigate to settings') },
+    { id: 1, title: '30-min Consultation', type: 'Event Type', action: () => window.location.href = '/events' },
+    { id: 2, title: 'Sarah Johnson Meeting', type: 'Booking', action: () => window.location.href = '/bookings' },
+    { id: 3, title: 'Calendar Settings', type: 'Settings', action: () => window.location.href = '/settings' },
   ];
 
   const notifications = [
@@ -45,8 +45,11 @@ export const Header: React.FC = () => {
   const handleSearch = (value: string) => {
     setSearchValue(value);
     if (value.length > 2) {
-      console.log('Searching for:', value);
-      // Implement actual search logic here
+      // Filter search results based on search value
+      const filtered = searchResults.filter(result => 
+        result.title.toLowerCase().includes(value.toLowerCase())
+      );
+      // Additional search functionality can be implemented here
     }
   };
 
@@ -130,11 +133,11 @@ export const Header: React.FC = () => {
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem data-action="profile">Profile</DropdownMenuItem>
-                <DropdownMenuItem data-action="billing">Billing</DropdownMenuItem>
-                <DropdownMenuItem data-action="team">Team</DropdownMenuItem>
+                <DropdownMenuItem data-action="profile" onClick={() => window.location.href = '/settings'}>Profile</DropdownMenuItem>
+                <DropdownMenuItem data-action="billing" onClick={() => toast({ title: "Coming Soon", description: "Billing management is being developed." })}>Billing</DropdownMenuItem>
+                <DropdownMenuItem data-action="team" onClick={() => window.location.href = '/settings?tab=access'}>Team</DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem data-action="logout">Log out</DropdownMenuItem>
+                <DropdownMenuItem data-action="logout" onClick={() => toast({ title: "Logged Out", description: "You have been successfully logged out." })}>Log out</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

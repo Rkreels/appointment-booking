@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useAuth } from '../hooks/useAuth';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
 import AvailabilitySettings from '../components/AvailabilitySettings';
 import IntegrationSettings from '../components/IntegrationSettings';
 import AccessControl from '../components/AccessControl';
@@ -17,6 +18,7 @@ import ProtectedRoute from '../components/ProtectedRoute';
 
 const ProfileSettings = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   
   return (
     <div className="space-y-6">
@@ -46,15 +48,23 @@ const ProfileSettings = () => {
             <Label htmlFor="bio">Bio</Label>
             <Input id="bio" placeholder="Tell people about yourself..." data-action="edit-bio" />
           </div>
-          <Button data-action="save-profile">Save Changes</Button>
+          <Button 
+            data-action="save-profile"
+            onClick={() => toast({ title: "Profile Updated", description: "Your profile has been saved successfully." })}
+          >
+            Save Changes
+          </Button>
         </CardContent>
       </Card>
     </div>
   );
 };
 
-const NotificationSettings = () => (
-  <div className="space-y-6">
+const NotificationSettings = () => {
+  const { toast } = useToast();
+  
+  return (
+    <div className="space-y-6">
     <Card>
       <CardHeader>
         <CardTitle>Notification Preferences</CardTitle>
@@ -81,14 +91,23 @@ const NotificationSettings = () => (
           </div>
           <Switch defaultChecked data-action="toggle-calendar-reminders" />
         </div>
-        <Button data-action="save-notification-preferences">Save Preferences</Button>
+        <Button 
+          data-action="save-notification-preferences"
+          onClick={() => toast({ title: "Preferences Saved", description: "Your notification preferences have been updated." })}
+        >
+          Save Preferences
+        </Button>
       </CardContent>
     </Card>
   </div>
-);
+  );
+};
 
-const SecuritySettings = () => (
-  <div className="space-y-6">
+const SecuritySettings = () => {
+  const { toast } = useToast();
+  
+  return (
+    <div className="space-y-6">
     <Card>
       <CardHeader>
         <CardTitle>Security Settings</CardTitle>
@@ -113,14 +132,23 @@ const SecuritySettings = () => (
           </div>
           <Switch data-action="toggle-2fa" />
         </div>
-        <Button data-action="update-security">Update Security</Button>
+        <Button 
+          data-action="update-security"
+          onClick={() => toast({ title: "Security Updated", description: "Your security settings have been updated successfully." })}
+        >
+          Update Security
+        </Button>
       </CardContent>
     </Card>
   </div>
-);
+  );
+};
 
-const AppearanceSettings = () => (
-  <div className="space-y-6">
+const AppearanceSettings = () => {
+  const { toast } = useToast();
+  
+  return (
+    <div className="space-y-6">
     <Card>
       <CardHeader>
         <CardTitle>Appearance Preferences</CardTitle>
@@ -143,14 +171,21 @@ const AppearanceSettings = () => (
             <div className="w-8 h-8 bg-red-600 rounded cursor-pointer" data-action="color-red"></div>
           </div>
         </div>
-        <Button data-action="save-appearance">Save Appearance</Button>
+        <Button 
+          data-action="save-appearance"
+          onClick={() => toast({ title: "Appearance Saved", description: "Your appearance preferences have been saved." })}
+        >
+          Save Appearance
+        </Button>
       </CardContent>
     </Card>
   </div>
-);
+  );
+};
 
 const Settings = () => {
   const { hasPermission } = useAuth();
+  const { toast } = useToast();
 
   return (
     <Layout>
@@ -255,7 +290,12 @@ const Settings = () => {
                         <option>UTC+0 (GMT)</option>
                       </select>
                     </div>
-                    <Button data-action="save-advanced-settings">Save Advanced Settings</Button>
+                    <Button 
+                      data-action="save-advanced-settings"
+                      onClick={() => toast({ title: "Settings Saved", description: "Advanced settings have been saved successfully." })}
+                    >
+                      Save Advanced Settings
+                    </Button>
                   </CardContent>
                 </Card>
               </div>

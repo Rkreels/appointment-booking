@@ -78,21 +78,28 @@ const VoiceTrainer: React.FC = () => {
     const handleUserInteraction = () => {
       if (!hasUserInteracted) {
         setHasUserInteracted(true);
-        console.log('User interaction detected, voice training will start');
+        console.log('User interaction detected, voice training will start automatically');
+        // Small delay to ensure the interaction is processed
+        setTimeout(() => {
+          if (!recognition) {
+            console.log('Initializing voice recognition after user interaction');
+          }
+        }, 500);
       }
     };
 
     // Listen for various user interactions
-    document.addEventListener('click', handleUserInteraction, { once: true });
-    document.addEventListener('keydown', handleUserInteraction, { once: true });
-    document.addEventListener('touchstart', handleUserInteraction, { once: true });
+    const events = ['click', 'keydown', 'touchstart', 'mousedown', 'focus', 'scroll'];
+    events.forEach(event => {
+      document.addEventListener(event, handleUserInteraction, { once: true, passive: true });
+    });
 
     return () => {
-      document.removeEventListener('click', handleUserInteraction);
-      document.removeEventListener('keydown', handleUserInteraction);
-      document.removeEventListener('touchstart', handleUserInteraction);
+      events.forEach(event => {
+        document.removeEventListener(event, handleUserInteraction);
+      });
     };
-  }, [hasUserInteracted]);
+  }, [hasUserInteracted, recognition]);
 
   useEffect(() => {
     if (!hasUserInteracted) return;
