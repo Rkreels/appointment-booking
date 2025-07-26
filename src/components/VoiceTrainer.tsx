@@ -1,5 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useLocation } from 'react-router-dom';
+import { useVoiceRecognition } from '@/hooks/useVoiceRecognition';
+import { toast } from '@/hooks/use-toast';
 
 interface VoiceCommand {
   action: string;
@@ -10,292 +12,197 @@ interface VoiceCommand {
 
 const VoiceTrainer: React.FC = () => {
   const location = useLocation();
-  const [isListening, setIsListening] = useState(false);
-  const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
-  const [isSupported, setIsSupported] = useState(false);
-  const [hasUserInteracted, setHasUserInteracted] = useState(false);
+
+  // Helper function to get page name from pathname
+  const getPageName = (pathname: string) => {
+    switch (pathname) {
+      case '/': return 'Dashboard';
+      case '/calendar': return 'Calendar';
+      case '/events': return 'Event Types';
+      case '/bookings': return 'Bookings';
+      case '/analytics': return 'Analytics';
+      case '/settings': return 'Settings';
+      case '/book': return 'Public Booking';
+      default: return 'Page';
+    }
+  };
 
   // Comprehensive voice commands for all functionalities
   const voiceCommands: VoiceCommand[] = [
     // Navigation
-    { action: 'dashboard', element: '[data-action="dashboard"]', description: 'Go to dashboard' },
-    { action: 'calendar', element: '[data-action="calendar"]', description: 'Open calendar' },
-    { action: 'events', element: '[data-action="events"]', description: 'Manage event types' },
-    { action: 'bookings', element: '[data-action="bookings"]', description: 'View bookings' },
-    { action: 'analytics', element: '[data-action="analytics"]', description: 'Show analytics' },
-    { action: 'settings', element: '[data-action="settings"]', description: 'Open settings' },
+    { action: 'dashboard', element: '[data-action="dashboard"]', description: 'Go to dashboard', alternatives: ['home', 'main'] },
+    { action: 'calendar', element: '[data-action="calendar"]', description: 'Open calendar', alternatives: ['schedule', 'appointments'] },
+    { action: 'events', element: '[data-action="events"]', description: 'Manage event types', alternatives: ['event types', 'meeting types'] },
+    { action: 'bookings', element: '[data-action="bookings"]', description: 'View bookings', alternatives: ['appointments', 'meetings'] },
+    { action: 'analytics', element: '[data-action="analytics"]', description: 'Show analytics', alternatives: ['reports', 'statistics', 'data'] },
+    { action: 'settings', element: '[data-action="settings"]', description: 'Open settings', alternatives: ['preferences', 'configuration'] },
     
     // Sidebar
-    { action: 'toggle sidebar', element: '[data-action="toggle-sidebar"]', description: 'Toggle sidebar visibility' },
-    { action: 'new event', element: '[data-action="new-event"]', description: 'Create new event type' },
+    { action: 'toggle sidebar', element: '[data-action="toggle-sidebar"]', description: 'Toggle sidebar visibility', alternatives: ['show sidebar', 'hide sidebar', 'menu'] },
+    { action: 'new event', element: '[data-action="new-event"]', description: 'Create new event type', alternatives: ['create event', 'add event'] },
     
     // Header actions
-    { action: 'search', element: '[data-action="global-search"]', description: 'Open search', alternatives: ['find', 'look for'] },
-    { action: 'notifications', element: '[data-action="notifications"]', description: 'View notifications' },
-    { action: 'user menu', element: '[data-action="user-menu"]', description: 'Open user menu' },
+    { action: 'search', element: '[data-action="global-search"]', description: 'Open search', alternatives: ['find', 'look for', 'search for'] },
+    { action: 'notifications', element: '[data-action="notifications"]', description: 'View notifications', alternatives: ['alerts', 'messages'] },
+    { action: 'user menu', element: '[data-action="user-menu"]', description: 'Open user menu', alternatives: ['profile menu', 'account menu'] },
     
-    // Dashboard quick actions
-    { action: 'create new event', element: '[data-action="create-new-event"]', description: 'Create new event type' },
-    { action: 'view public booking', element: '[data-action="view-public-booking"]', description: 'View public booking page' },
-    { action: 'share booking link', element: '[data-action="share-booking-link"]', description: 'Share public booking link' },
+    // Voice training specific
+    { action: 'start voice training', element: '', description: 'Start voice recognition training' },
+    { action: 'stop voice training', element: '', description: 'Stop voice recognition training' },
+    { action: 'voice status', element: '', description: 'Check voice recognition status' },
+    { action: 'microphone test', element: '', description: 'Test microphone functionality' },
+    { action: 'voice calibration', element: '', description: 'Calibrate voice recognition' },
+    { action: 'pronunciation practice', element: '', description: 'Practice command pronunciation' },
+    { action: 'accuracy check', element: '', description: 'Check recognition accuracy' },
     
-    // Settings tabs
-    { action: 'profile settings', element: '[data-action="profile-settings"]', description: 'Open profile settings' },
-    { action: 'availability settings', element: '[data-action="availability-settings"]', description: 'Configure availability' },
-    { action: 'notification settings', element: '[data-action="notification-settings"]', description: 'Manage notifications' },
-    { action: 'integration settings', element: '[data-action="integration-settings"]', description: 'Setup integrations' },
-    { action: 'security settings', element: '[data-action="security-settings"]', description: 'Security options' },
-    { action: 'appearance settings', element: '[data-action="appearance-settings"]', description: 'Customize appearance' },
-    { action: 'access control settings', element: '[data-action="access-control-settings"]', description: 'Manage user access' },
-    { action: 'advanced settings', element: '[data-action="advanced-settings"]', description: 'Advanced configuration' },
+    // Enhanced navigation
+    { action: 'quick booking', element: '[data-action="view-public-booking"]', description: 'Open public booking page' },
+    { action: 'share link', element: '[data-action="share-booking-link"]', description: 'Share booking link' },
+    { action: 'new booking', element: '[data-action="new-booking"]', description: 'Create new booking' },
     
-    // Access control commands
-    { action: 'add user', element: '[data-action="add-user"]', description: 'Add new user' },
-    { action: 'save new user', element: '[data-action="save-new-user"]', description: 'Save new user' },
-    { action: 'cancel add user', element: '[data-action="cancel-add-user"]', description: 'Cancel adding user' },
+    // Form and UI interactions
+    { action: 'save', element: 'button[type="submit"]', description: 'Save current form', alternatives: ['submit', 'confirm'] },
+    { action: 'cancel', element: 'button:contains("Cancel")', description: 'Cancel current action', alternatives: ['close', 'dismiss'] },
+    { action: 'edit', element: 'button:contains("Edit")', description: 'Edit selected item', alternatives: ['modify', 'change'] },
+    { action: 'delete', element: 'button:contains("Delete")', description: 'Delete selected item', alternatives: ['remove', 'trash'] },
+    { action: 'duplicate', element: 'button:contains("Copy")', description: 'Duplicate selected item', alternatives: ['copy', 'clone'] },
     
-    // User menu actions
-    { action: 'profile', element: '[data-action="profile"]', description: 'View profile' },
-    { action: 'billing', element: '[data-action="billing"]', description: 'Manage billing' },
-    { action: 'team', element: '[data-action="team"]', description: 'Team management' },
-    { action: 'logout', element: '[data-action="logout"]', description: 'Sign out', alternatives: ['sign out', 'log out'] },
-    
-    // Form actions
-    { action: 'save', element: 'button[type="submit"], button:contains("Save")', description: 'Save changes' },
-    { action: 'cancel', element: 'button:contains("Cancel")', description: 'Cancel action' },
-    { action: 'delete', element: 'button:contains("Delete")', description: 'Delete item' },
-    { action: 'edit', element: 'button:contains("Edit")', description: 'Edit item' },
-    
-    // General commands
-    { action: 'help', element: '', description: 'Show available voice commands', alternatives: ['commands', 'what can I say'] },
-    { action: 'scroll up', element: '', description: 'Scroll page up' },
-    { action: 'scroll down', element: '', description: 'Scroll page down' },
-    { action: 'go back', element: '', description: 'Navigate back', alternatives: ['back', 'previous'] },
+    // System commands
+    { action: 'help', element: '', description: 'Show available voice commands', alternatives: ['commands', 'what can I say', 'voice help'] },
+    { action: 'scroll up', element: '', description: 'Scroll page up', alternatives: ['page up', 'move up'] },
+    { action: 'scroll down', element: '', description: 'Scroll page down', alternatives: ['page down', 'move down'] },
+    { action: 'go back', element: '', description: 'Navigate back', alternatives: ['back', 'previous', 'return'] },
+    { action: 'refresh', element: '', description: 'Refresh the page', alternatives: ['reload', 'update'] },
+    { action: 'focus search', element: 'input[type="search"], input[placeholder*="search" i]', description: 'Focus on search input' },
   ];
 
-  // Setup user interaction listener
-  useEffect(() => {
-    const handleUserInteraction = () => {
-      if (!hasUserInteracted) {
-        setHasUserInteracted(true);
-        console.log('User interaction detected, voice training will start automatically');
-        // Small delay to ensure the interaction is processed
-        setTimeout(() => {
-          if (!recognition) {
-            console.log('Initializing voice recognition after user interaction');
-          }
-        }, 500);
-      }
-    };
+  // Enhanced command handler with training features
+  const handleVoiceCommand = (action: string) => {
+    console.log('Voice command received:', action);
 
-    // Listen for various user interactions
-    const events = ['click', 'keydown', 'touchstart', 'mousedown', 'focus', 'scroll'];
-    events.forEach(event => {
-      document.addEventListener(event, handleUserInteraction, { once: true, passive: true });
-    });
-
-    return () => {
-      events.forEach(event => {
-        document.removeEventListener(event, handleUserInteraction);
-      });
-    };
-  }, [hasUserInteracted, recognition]);
-
-  useEffect(() => {
-    if (!hasUserInteracted) return;
-
-    // Check for speech recognition support
-    const SpeechRecognitionClass = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    
-    if (!SpeechRecognitionClass) {
-      console.log('Speech recognition not supported in this browser');
-      setIsSupported(false);
-      return;
-    }
-
-    setIsSupported(true);
-    const recognitionInstance = new SpeechRecognitionClass() as SpeechRecognition;
-    
-    recognitionInstance.continuous = true;
-    recognitionInstance.interimResults = false;
-    recognitionInstance.lang = 'en-US';
-
-    recognitionInstance.onstart = () => {
-      console.log('Voice recognition started');
-      setIsListening(true);
-    };
-
-    recognitionInstance.onend = () => {
-      console.log('Voice recognition ended');
-      setIsListening(false);
-      // Restart listening after a brief pause
-      setTimeout(() => {
-        if (recognitionInstance && isSupported) {
-          try {
-            recognitionInstance.start();
-          } catch (error) {
-            console.log('Cannot restart recognition:', error);
-          }
+    // Handle special training commands
+    switch (action) {
+      case 'start voice training':
+        if (!isListening) {
+          startListening();
+          speak('Voice training started. You can now use voice commands.');
+          toast({
+            title: "Voice Training Started",
+            description: "Voice recognition is now active. Try saying 'help' for available commands.",
+          });
         }
-      }, 1000);
-    };
-
-    recognitionInstance.onresult = (event: SpeechRecognitionEvent) => {
-      const command = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
-      console.log('Voice command received:', command);
-      handleVoiceCommand(command);
-    };
-
-    recognitionInstance.onerror = (event: SpeechRecognitionErrorEvent) => {
-      console.log('Speech recognition error:', event.error);
-      if (event.error !== 'no-speech' && event.error !== 'audio-capture') {
-        setIsListening(false);
-        setTimeout(() => {
-          if (recognitionInstance && isSupported) {
-            try {
-              recognitionInstance.start();
-            } catch (error) {
-              console.log('Cannot restart after error:', error);
-            }
-          }
-        }, 2000);
-      }
-    };
-
-    setRecognition(recognitionInstance);
-    
-    // Start recognition
-    try {
-      recognitionInstance.start();
-      console.log('Voice recognition initialized and started');
-    } catch (error) {
-      console.log('Error starting recognition:', error);
-    }
-
-    return () => {
-      try {
-        if (recognitionInstance) {
-          recognitionInstance.stop();
-        }
-      } catch (error) {
-        console.log('Error stopping recognition:', error);
-      }
-    };
-  }, [hasUserInteracted]);
-
-  const handleVoiceCommand = (command: string) => {
-    console.log('Processing voice command:', command);
-
-    // Handle special commands
-    if (command.includes('help') || command.includes('commands') || command.includes('what can i say')) {
-      showAvailableCommands();
-      return;
-    }
-
-    if (command.includes('scroll up')) {
-      window.scrollBy({ top: -300, behavior: 'smooth' });
-      speak('Scrolling up');
-      return;
-    }
-
-    if (command.includes('scroll down')) {
-      window.scrollBy({ top: 300, behavior: 'smooth' });
-      speak('Scrolling down');
-      return;
-    }
-
-    if (command.includes('go back') || command.includes('back') || command.includes('previous')) {
-      window.history.back();
-      speak('Going back');
-      return;
-    }
-
-    // Find matching command
-    const matchedCommand = voiceCommands.find(cmd => {
-      const mainMatch = command.includes(cmd.action.toLowerCase());
-      const alternativeMatch = cmd.alternatives?.some(alt => command.includes(alt.toLowerCase()));
-      return mainMatch || alternativeMatch;
-    });
-
-    if (matchedCommand && matchedCommand.element) {
-      const element = document.querySelector(matchedCommand.element) as HTMLElement;
-      if (element) {
-        console.log(`Executing command: ${matchedCommand.action}`);
-        
-        // Handle different element types
-        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
-          element.focus();
-          speak(`Focused on ${matchedCommand.action}`);
-        } else if (element.tagName === 'A' || element.tagName === 'BUTTON') {
-          element.click();
-          speak(`${matchedCommand.description} activated`);
-        } else {
-          // Try to find a clickable child element
-          const clickable = element.querySelector('a, button') as HTMLElement;
-          if (clickable) {
-            clickable.click();
-            speak(`${matchedCommand.description} activated`);
-          } else {
-            element.click();
-            speak(`${matchedCommand.description} activated`);
-          }
-        }
-      } else {
-        console.log(`Element not found for command: ${matchedCommand.action}`);
-        speak(`Sorry, ${matchedCommand.action} is not available on this page`);
-      }
-    } else {
-      console.log('Command not recognized:', command);
-      speak('Command not recognized. Say "help" to see available commands.');
-    }
-  };
-
-  const speak = (text: string) => {
-    if ('speechSynthesis' in window) {
-      // Cancel any existing speech
-      speechSynthesis.cancel();
+        break;
       
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.9;
-      utterance.pitch = 1;
-      utterance.volume = 0.7;
-      speechSynthesis.speak(utterance);
+      case 'stop voice training':
+        if (isListening) {
+          stopListening();
+          speak('Voice training stopped.');
+          toast({
+            title: "Voice Training Stopped",
+            description: "Voice recognition has been deactivated.",
+          });
+        }
+        break;
+      
+      case 'voice status':
+        const status = isListening ? 'active' : 'inactive';
+        const support = isSupported ? 'supported' : 'not supported';
+        speak(`Voice recognition is ${status} and ${support}`);
+        toast({
+          title: "Voice Status",
+          description: `Voice recognition: ${status}, Browser support: ${support}`,
+        });
+        break;
+      
+      case 'microphone test':
+        speak('Microphone test: If you can hear this, audio output is working. Please say something to test voice input.');
+        toast({
+          title: "Microphone Test",
+          description: "Audio output tested. Please speak to test voice input.",
+        });
+        break;
+      
+      case 'voice calibration':
+        speak('Voice calibration started. Please speak clearly and try different command phrases.');
+        toast({
+          title: "Voice Calibration",
+          description: "Speak clearly and try various commands to improve recognition accuracy.",
+        });
+        break;
+      
+      case 'pronunciation practice':
+        const practiceCommands = [
+          'dashboard', 'calendar', 'events', 'bookings', 'analytics', 'settings',
+          'new event', 'help', 'save', 'cancel', 'search'
+        ];
+        const randomCommand = practiceCommands[Math.floor(Math.random() * practiceCommands.length)];
+        speak(`Practice saying: ${randomCommand}`);
+        toast({
+          title: "Pronunciation Practice",
+          description: `Try saying: "${randomCommand}"`,
+        });
+        break;
+      
+      case 'accuracy check':
+        speak(`Last command confidence: ${Math.round(confidence * 100)}%. Recognition accuracy is ${confidence > 0.7 ? 'good' : 'needs improvement'}.`);
+        toast({
+          title: "Accuracy Check",
+          description: `Recognition confidence: ${Math.round(confidence * 100)}%`,
+        });
+        break;
+      
+      case 'refresh':
+        window.location.reload();
+        break;
+      
+      default:
+        // Handle regular commands through the voice recognition hook
+        break;
     }
   };
 
-  const showAvailableCommands = () => {
-    const pageSpecificCommands = voiceCommands.filter(cmd => {
-      if (!cmd.element) return true;
-      return document.querySelector(cmd.element) !== null;
-    });
+  // Initialize voice recognition with enhanced error handling
+  const {
+    isListening,
+    isSupported,
+    hasUserInteracted,
+    transcript,
+    confidence,
+    startListening,
+    stopListening,
+    toggleListening,
+    speak,
+    showAvailableCommands,
+  } = useVoiceRecognition({
+    commands: voiceCommands,
+    onCommand: handleVoiceCommand,
+    autoStart: true,
+  });
 
-    console.log('Available voice commands:', pageSpecificCommands.map(cmd => cmd.action));
-    const commandList = pageSpecificCommands.slice(0, 6).map(cmd => cmd.action).join(', ');
-    speak(`Available commands include: ${commandList}, and more. Check the console for a full list.`);
-  };
+  // Page load announcement with enhanced features
+  React.useEffect(() => {
+    const announcePageLoad = () => {
+      const pageName = getPageName(location.pathname);
+      speak(`${pageName} page loaded. Voice training is ${isListening ? 'active' : 'ready'}. Say help for commands.`);
+    };
 
-  // Auto-announce page changes and available commands
-  useEffect(() => {
-    if (!isSupported || !hasUserInteracted) return;
-
-    const timer = setTimeout(() => {
-      const pageName = location.pathname === '/' ? 'dashboard' : location.pathname.substring(1);
-      speak(`${pageName} page loaded. Voice commands are active. Say "help" for available commands.`);
-    }, 1500);
-
-    return () => clearTimeout(timer);
-  }, [location, isSupported, hasUserInteracted]);
-
-  // Show voice status indicator in console
-  useEffect(() => {
-    if (isSupported && hasUserInteracted) {
-      console.log(`Voice Training Status: ${isListening ? 'Listening...' : 'Ready'}`);
-    } else if (!hasUserInteracted) {
-      console.log('Voice Training: Waiting for user interaction...');
-    } else {
-      console.log('Voice Training: Not supported in this browser');
+    if (hasUserInteracted && isSupported) {
+      setTimeout(announcePageLoad, 1000);
     }
-  }, [isListening, isSupported, hasUserInteracted]);
+  }, [location.pathname, hasUserInteracted, isSupported, isListening, speak]);
+
+  // Voice training status logging
+  React.useEffect(() => {
+    const status = {
+      supported: isSupported,
+      listening: isListening,
+      userInteracted: hasUserInteracted,
+      confidence: confidence,
+      currentPage: location.pathname
+    };
+    
+    console.log('Voice Training Status:', status);
+  }, [isSupported, isListening, hasUserInteracted, confidence, location.pathname]);
 
   return null; // This component doesn't render anything visible
 };

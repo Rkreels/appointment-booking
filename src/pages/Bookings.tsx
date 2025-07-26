@@ -8,23 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { BookingForm } from '../components/BookingForm';
+import { useBookings, Booking } from '@/hooks/useBookings';
 import { toast } from '@/hooks/use-toast';
-
-interface Booking {
-  id: number;
-  eventType: string;
-  attendee: {
-    name: string;
-    email: string;
-    phone: string;
-  };
-  date: string;
-  time: string;
-  duration: string;
-  status: string;
-  location: string;
-  notes: string;
-}
 
 const Bookings = () => {
   const [filter, setFilter] = useState('all');
@@ -32,68 +17,15 @@ const Bookings = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingBooking, setEditingBooking] = useState<Booking | undefined>();
 
-  const [bookings, setBookings] = useState<Booking[]>([
-    {
-      id: 1,
-      eventType: '30-min Consultation',
-      attendee: {
-        name: 'John Doe',
-        email: 'john@example.com',
-        phone: '+1 (555) 123-4567'
-      },
-      date: '2024-01-15',
-      time: '09:00 AM',
-      duration: '30 min',
-      status: 'confirmed',
-      location: 'Zoom Meeting',
-      notes: 'Discussing project requirements'
-    },
-    {
-      id: 2,
-      eventType: 'Team Sync',
-      attendee: {
-        name: 'Sarah Wilson',
-        email: 'sarah@company.com',
-        phone: '+1 (555) 987-6543'
-      },
-      date: '2024-01-15',
-      time: '02:00 PM',
-      duration: '45 min',
-      status: 'pending',
-      location: 'Conference Room A',
-      notes: 'Weekly team alignment meeting'
-    },
-    {
-      id: 3,
-      eventType: '60-min Strategy Session',
-      attendee: {
-        name: 'Mike Johnson',
-        email: 'mike@startup.com',
-        phone: '+1 (555) 456-7890'
-      },
-      date: '2024-01-16',
-      time: '11:00 AM',
-      duration: '60 min',
-      status: 'confirmed',
-      location: 'Google Meet',
-      notes: 'Q1 planning and strategy discussion'
-    },
-    {
-      id: 4,
-      eventType: '15-min Quick Chat',
-      attendee: {
-        name: 'Emily Davis',
-        email: 'emily@agency.com',
-        phone: '+1 (555) 321-0987'
-      },
-      date: '2024-01-14',
-      time: '03:30 PM',
-      duration: '15 min',
-      status: 'completed',
-      location: 'Phone Call',
-      notes: 'Follow-up on proposal'
-    }
-  ]);
+  const {
+    bookings,
+    loading,
+    createBooking,
+    updateBooking,
+    deleteBooking,
+    searchBookings,
+    getBookingStats,
+  } = useBookings();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -114,27 +46,11 @@ const Bookings = () => {
     return matchesFilter && matchesSearch;
   });
 
-  const handleSaveBooking = (bookingData: Booking) => {
+  const handleSaveBooking = (bookingData: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (editingBooking) {
-      // Update existing booking
-      setBookings(prev => prev.map(booking => 
-        booking.id === editingBooking.id ? { ...bookingData, id: editingBooking.id } : booking
-      ));
-      toast({
-        title: "Booking Updated",
-        description: `Booking for ${bookingData.attendee.name} has been updated.`,
-      });
+      updateBooking(editingBooking.id, bookingData);
     } else {
-      // Create new booking
-      const newBooking = {
-        ...bookingData,
-        id: Math.max(...bookings.map(b => b.id)) + 1
-      };
-      setBookings(prev => [...prev, newBooking]);
-      toast({
-        title: "Booking Created",
-        description: `New booking for ${bookingData.attendee.name} has been created.`,
-      });
+      createBooking(bookingData);
     }
     setShowForm(false);
     setEditingBooking(undefined);
@@ -146,40 +62,14 @@ const Bookings = () => {
   };
 
   const handleDeleteBooking = (bookingId: number) => {
-    const booking = bookings.find(b => b.id === bookingId);
-    if (booking && window.confirm(`Are you sure you want to delete the booking for ${booking.attendee.name}?`)) {
-      setBookings(prev => prev.filter(b => b.id !== bookingId));
-      toast({
-        title: "Booking Deleted",
-        description: `Booking for ${booking.attendee.name} has been deleted.`,
-        variant: "destructive",
-      });
-    }
+    deleteBooking(bookingId);
   };
 
   const handleStatusChange = (bookingId: number, newStatus: string) => {
-    setBookings(prev => prev.map(booking => 
-      booking.id === bookingId ? { ...booking, status: newStatus } : booking
-    ));
-    const booking = bookings.find(b => b.id === bookingId);
-    if (booking) {
-      toast({
-        title: "Status Updated",
-        description: `Booking for ${booking.attendee.name} is now ${newStatus}.`,
-      });
-    }
+    updateBooking(bookingId, { status: newStatus as Booking['status'] });
   };
 
-  const getStatusCounts = () => {
-    return {
-      today: bookings.filter(b => b.date === new Date().toISOString().split('T')[0]).length,
-      week: 45, // Mock data
-      month: 168, // Mock data
-      pending: bookings.filter(b => b.status === 'pending').length
-    };
-  };
-
-  const statusCounts = getStatusCounts();
+  const statusCounts = getBookingStats();
 
   return (
     <Layout>
@@ -244,7 +134,7 @@ const Bookings = () => {
               <Card>
                 <CardContent className="p-4">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">{statusCounts.week}</div>
+                    <div className="text-2xl font-bold text-green-600">{statusCounts.thisWeek}</div>
                     <div className="text-sm text-gray-600">This Week</div>
                   </div>
                 </CardContent>
@@ -252,7 +142,7 @@ const Bookings = () => {
               <Card>
                 <CardContent className="p-4">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-600">{statusCounts.month}</div>
+                    <div className="text-2xl font-bold text-purple-600">{statusCounts.thisMonth}</div>
                     <div className="text-sm text-gray-600">This Month</div>
                   </div>
                 </CardContent>

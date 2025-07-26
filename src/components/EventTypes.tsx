@@ -5,98 +5,29 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { EventForm } from './EventForm';
+import { useEventTypes, EventType } from '@/hooks/useEventTypes';
 import { toast } from '@/hooks/use-toast';
 
-interface EventType {
-  id: number;
-  name: string;
-  duration: number;
-  price: string;
-  description: string;
-  bookings: number;
-  color: string;
-  active: boolean;
-  location: string;
-  bufferTime: number;
-}
-
 const EventTypes: React.FC = () => {
-  const [eventTypes, setEventTypes] = useState<EventType[]>([
-    {
-      id: 1,
-      name: '30-min Consultation',
-      duration: 30,
-      price: '$150',
-      description: 'One-on-one consultation for project planning and strategy.',
-      bookings: 45,
-      color: 'bg-blue-500',
-      active: true,
-      location: 'Zoom Meeting',
-      bufferTime: 10
-    },
-    {
-      id: 2,
-      name: 'Team Sync Meeting',
-      duration: 45,
-      price: 'Free',
-      description: 'Weekly team alignment and progress review.',
-      bookings: 23,
-      color: 'bg-green-500',
-      active: true,
-      location: 'Conference Room A',
-      bufferTime: 5
-    },
-    {
-      id: 3,
-      name: '60-min Strategy Session',
-      duration: 60,
-      price: '$250',
-      description: 'Deep dive into business strategy and planning.',
-      bookings: 12,
-      color: 'bg-purple-500',
-      active: false,
-      location: 'Google Meet',
-      bufferTime: 15
-    },
-    {
-      id: 4,
-      name: '15-min Quick Chat',
-      duration: 15,
-      price: 'Free',
-      description: 'Brief check-in or follow-up conversation.',
-      bookings: 67,
-      color: 'bg-orange-500',
-      active: true,
-      location: 'Phone Call',
-      bufferTime: 0
-    }
-  ]);
+  const {
+    eventTypes,
+    loading,
+    createEventType,
+    updateEventType,
+    deleteEventType,
+    duplicateEventType,
+    toggleActiveStatus,
+    getEventTypeStats,
+  } = useEventTypes();
 
   const [showForm, setShowForm] = useState(false);
   const [editingEvent, setEditingEvent] = useState<EventType | undefined>();
 
-  const handleSaveEvent = (eventData: EventType) => {
+  const handleSaveEvent = (eventData: Omit<EventType, 'id' | 'bookings' | 'createdAt' | 'updatedAt'>) => {
     if (editingEvent) {
-      // Update existing event
-      setEventTypes(prev => prev.map(event => 
-        event.id === editingEvent.id ? { ...eventData, id: editingEvent.id } : event
-      ));
-      toast({
-        title: "Event Updated",
-        description: `${eventData.name} has been updated successfully.`,
-      });
+      updateEventType(editingEvent.id, eventData);
     } else {
-      // Create new event
-      const newEvent = {
-        ...eventData,
-        id: Math.max(...eventTypes.map(e => e.id)) + 1,
-        bookings: 0
-      };
-      setEventTypes(prev => [...prev, newEvent]);
-      toast({
-        title: "Event Created",
-        description: `${eventData.name} has been created successfully.`,
-      });
+      createEventType(eventData);
     }
     setShowForm(false);
     setEditingEvent(undefined);
@@ -108,43 +39,18 @@ const EventTypes: React.FC = () => {
   };
 
   const handleDeleteEvent = (eventId: number) => {
-    const event = eventTypes.find(e => e.id === eventId);
-    if (event && window.confirm(`Are you sure you want to delete "${event.name}"?`)) {
-      setEventTypes(prev => prev.filter(e => e.id !== eventId));
-      toast({
-        title: "Event Deleted",
-        description: `${event.name} has been deleted.`,
-        variant: "destructive",
-      });
-    }
+    deleteEventType(eventId);
   };
 
   const handleDuplicateEvent = (event: EventType) => {
-    const duplicatedEvent = {
-      ...event,
-      id: Math.max(...eventTypes.map(e => e.id)) + 1,
-      name: `${event.name} (Copy)`,
-      bookings: 0
-    };
-    setEventTypes(prev => [...prev, duplicatedEvent]);
-    toast({
-      title: "Event Duplicated",
-      description: `${event.name} has been duplicated.`,
-    });
+    duplicateEventType(event);
   };
 
   const handleToggleActive = (eventId: number) => {
-    setEventTypes(prev => prev.map(event => 
-      event.id === eventId ? { ...event, active: !event.active } : event
-    ));
-    const event = eventTypes.find(e => e.id === eventId);
-    if (event) {
-      toast({
-        title: event.active ? "Event Deactivated" : "Event Activated",
-        description: `${event.name} is now ${event.active ? 'inactive' : 'active'}.`,
-      });
-    }
+    toggleActiveStatus(eventId);
   };
+
+  const stats = getEventTypeStats();
 
   return (
     <Layout>
@@ -285,7 +191,7 @@ const EventTypes: React.FC = () => {
           <Card>
             <CardContent className="p-4">
               <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">{eventTypes.length}</div>
+                <div className="text-2xl font-bold text-blue-600">{stats.total}</div>
                 <div className="text-sm text-gray-600">Total Types</div>
               </div>
             </CardContent>
@@ -294,9 +200,7 @@ const EventTypes: React.FC = () => {
           <Card>
             <CardContent className="p-4">
               <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">
-                  {eventTypes.filter(et => et.active).length}
-                </div>
+                <div className="text-2xl font-bold text-green-600">{stats.active}</div>
                 <div className="text-sm text-gray-600">Active</div>
               </div>
             </CardContent>
@@ -305,9 +209,7 @@ const EventTypes: React.FC = () => {
           <Card>
             <CardContent className="p-4">
               <div className="text-center">
-                <div className="text-2xl font-bold text-purple-600">
-                  {eventTypes.reduce((sum, et) => sum + et.bookings, 0)}
-                </div>
+                <div className="text-2xl font-bold text-purple-600">{stats.totalBookings}</div>
                 <div className="text-sm text-gray-600">Total Bookings</div>
               </div>
             </CardContent>
@@ -316,9 +218,7 @@ const EventTypes: React.FC = () => {
           <Card>
             <CardContent className="p-4">
               <div className="text-center">
-                <div className="text-2xl font-bold text-orange-600">
-                  {Math.round(eventTypes.reduce((sum, et) => sum + et.duration, 0) / eventTypes.length)}m
-                </div>
+                <div className="text-2xl font-bold text-orange-600">{stats.averageDuration}m</div>
                 <div className="text-sm text-gray-600">Avg Duration</div>
               </div>
             </CardContent>
