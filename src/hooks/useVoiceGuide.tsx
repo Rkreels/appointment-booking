@@ -19,14 +19,20 @@ export const useVoiceGuide = () => {
 
   const announcePageNavigation = useCallback((pageName: string) => {
     speak(`Navigated to ${pageName} page. Welcome!`);
+    // Dispatch event for tracking
+    window.dispatchEvent(new CustomEvent('voice-guide-activated'));
   }, [speak]);
 
   const announceAction = useCallback((action: string) => {
     speak(action);
+    // Dispatch event for tracking
+    window.dispatchEvent(new CustomEvent('voice-guide-activated'));
   }, [speak]);
 
   const provideGuidance = useCallback((guidance: string) => {
     speak(guidance);
+    // Dispatch event for tracking
+    window.dispatchEvent(new CustomEvent('voice-guide-activated'));
   }, [speak]);
 
   const isSupported = 'speechSynthesis' in window;

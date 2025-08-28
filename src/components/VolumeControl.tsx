@@ -17,7 +17,7 @@ export const VolumeControl: React.FC<VolumeControlProps> = ({ onVolumeToggle }) 
   };
 
   return (
-    <div className="fixed bottom-4 left-4 z-50">
+    <div className="fixed bottom-4 right-4 z-50">
       <Card className="shadow-lg">
         <Button
           variant={isEnabled ? "default" : "outline"}
