@@ -7,7 +7,7 @@ interface UserTrackerProps {
 }
 
 export const UserTracker: React.FC<UserTrackerProps> = ({ children }) => {
-  const { trackAction } = useUserTracking();
+  const { trackAction, exportAnalyticsData } = useUserTracking();
   const location = useLocation();
 
   useEffect(() => {
@@ -108,7 +108,6 @@ export const UserTracker: React.FC<UserTrackerProps> = ({ children }) => {
   // Automatically export data every 30 seconds for external dashboard
   useEffect(() => {
     const exportData = () => {
-      const { exportAnalyticsData } = useUserTracking();
       const data = exportAnalyticsData();
       localStorage.setItem('userAnalyticsExport', JSON.stringify(data));
       
@@ -120,7 +119,7 @@ export const UserTracker: React.FC<UserTrackerProps> = ({ children }) => {
     exportData(); // Initial export
 
     return () => clearInterval(interval);
-  }, []);
+  }, [exportAnalyticsData]);
 
   return <>{children}</>;
 };
