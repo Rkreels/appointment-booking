@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Bell, Search, User, ChevronDown } from 'lucide-react';
+import { Bell, Search, User, ChevronDown, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SidebarTrigger } from '@/components/ui/sidebar';
@@ -95,6 +95,16 @@ export const Header: React.FC = () => {
           </div>
           
           <div className="flex items-center space-x-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.location.href = 'https://skillsim.vercel.app/dashboard'}
+              className="flex items-center gap-2"
+            >
+              <ExternalLink className="h-4 w-4" />
+              Master Dashboard
+            </Button>
+            
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" data-action="notifications" onClick={handleNotificationClick}>
