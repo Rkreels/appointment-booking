@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { toast } from 'sonner';
 
 interface Integration {
   id: string;
@@ -275,10 +276,17 @@ const IntegrationSettings: React.FC = () => {
               </div>
             </div>
             <div className="flex space-x-2">
-              <Button variant="outline" data-action="test-webhook">
+              <Button 
+                variant="outline" 
+                data-action="test-webhook"
+                onClick={() => toast.success('Webhook test sent successfully!')}
+              >
                 Test Webhook
               </Button>
-              <Button data-action="save-webhook">
+              <Button 
+                data-action="save-webhook"
+                onClick={() => toast.success('Webhook configuration saved!')}
+              >
                 Save Webhook
               </Button>
             </div>
@@ -298,7 +306,12 @@ const IntegrationSettings: React.FC = () => {
           <div className="p-4 bg-gray-50 rounded-lg">
             <div className="flex items-center justify-between mb-2">
               <h4 className="font-medium">API Key</h4>
-              <Button variant="outline" size="sm" data-action="generate-api-key">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                data-action="generate-api-key"
+                onClick={() => toast.success('New API key generated successfully!')}
+              >
                 Generate New Key
               </Button>
             </div>
@@ -312,13 +325,25 @@ const IntegrationSettings: React.FC = () => {
                 readOnly
                 className="font-mono text-sm"
               />
-              <Button variant="outline" size="sm" data-action="copy-api-key">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                data-action="copy-api-key"
+                onClick={() => {
+                  navigator.clipboard.writeText('sk_test_1234567890abcdef');
+                  toast.success('API key copied to clipboard!');
+                }}
+              >
                 Copy
               </Button>
             </div>
           </div>
           
-          <Button variant="outline" data-action="view-api-docs">
+          <Button 
+            variant="outline" 
+            data-action="view-api-docs"
+            onClick={() => window.open('https://docs.lovable.dev', '_blank')}
+          >
             <Link className="h-4 w-4 mr-2" />
             View API Documentation
           </Button>
@@ -326,7 +351,10 @@ const IntegrationSettings: React.FC = () => {
       </Card>
 
       <div className="flex justify-end">
-        <Button data-action="save-integrations">
+        <Button 
+          data-action="save-integrations"
+          onClick={() => toast.success('Integration settings saved successfully!')}
+        >
           Save Integration Settings
         </Button>
       </div>

@@ -80,13 +80,13 @@ export const AppSidebar: React.FC = () => {
           <p className="text-sm text-gray-600 mb-3 group-data-[collapsible=icon]:hidden">
             Manage your bookings and settings
           </p>
-          <Link 
-            to="/book"
+          <button
+            onClick={() => window.open('/book', '_blank')}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm py-2 px-3 rounded transition-colors group-data-[collapsible=icon]:px-2 flex items-center justify-center"
           >
             <span className="group-data-[collapsible=icon]:hidden">Public Booking</span>
             <span className="group-data-[collapsible=icon]:block hidden">📅</span>
-          </Link>
+          </button>
         </div>
       </SidebarFooter>
     </Sidebar>

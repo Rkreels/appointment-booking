@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Badge } from '@/components/ui/badge';
+import { useNavigate } from 'react-router-dom';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,11 +30,12 @@ export const Header: React.FC = () => {
   const [searchValue, setSearchValue] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const searchResults = [
-    { id: 1, title: '30-min Consultation', type: 'Event Type', action: () => window.location.href = '/events' },
-    { id: 2, title: 'Sarah Johnson Meeting', type: 'Booking', action: () => window.location.href = '/bookings' },
-    { id: 3, title: 'Calendar Settings', type: 'Settings', action: () => window.location.href = '/settings' },
+    { id: 1, title: '30-min Consultation', type: 'Event Type', action: () => navigate('/events') },
+    { id: 2, title: 'Sarah Johnson Meeting', type: 'Booking', action: () => navigate('/bookings') },
+    { id: 3, title: 'Calendar Settings', type: 'Settings', action: () => navigate('/settings') },
   ];
 
   const notifications = [
@@ -143,9 +145,9 @@ export const Header: React.FC = () => {
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem data-action="profile" onClick={() => window.location.href = '/settings'}>Profile</DropdownMenuItem>
+                <DropdownMenuItem data-action="profile" onClick={() => navigate('/settings')}>Profile</DropdownMenuItem>
                 <DropdownMenuItem data-action="billing" onClick={() => toast({ title: "Coming Soon", description: "Billing management is being developed." })}>Billing</DropdownMenuItem>
-                <DropdownMenuItem data-action="team" onClick={() => window.location.href = '/settings?tab=access'}>Team</DropdownMenuItem>
+                <DropdownMenuItem data-action="team" onClick={() => navigate('/settings?tab=access')}>Team</DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem data-action="logout" onClick={() => toast({ title: "Logged Out", description: "You have been successfully logged out." })}>Log out</DropdownMenuItem>
               </DropdownMenuContent>
