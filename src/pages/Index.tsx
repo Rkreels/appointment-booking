@@ -18,11 +18,12 @@ const Index = () => {
           </div>
           
           <div className="flex flex-col sm:flex-row gap-2">
-            <Button asChild data-action="view-public-booking">
-              <Link to="/book" className="flex items-center space-x-2">
-                <ExternalLink className="h-4 w-4" />
-                <span>View Public Booking Page</span>
-              </Link>
+            <Button 
+              onClick={() => window.open('/book', '_blank')}
+              data-action="view-public-booking"
+            >
+              <ExternalLink className="h-4 w-4 mr-2" />
+              View Public Booking Page
             </Button>
             <Button asChild data-action="create-new-event">
               <Link to="/events" className="flex items-center space-x-2">

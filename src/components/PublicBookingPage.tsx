@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { useBookings } from '@/hooks/useBookings';
+import { toast } from 'sonner';
 
 interface EventType {
   id: number;
@@ -37,6 +39,7 @@ const PublicBookingPage: React.FC = () => {
   const { eventId } = useParams();
   const [searchParams] = useSearchParams();
   const userPath = searchParams.get('user');
+  const { createBooking } = useBookings();
   
   const [step, setStep] = useState<'select-event' | 'select-time' | 'booking-form' | 'confirmation'>('select-event');
   const [selectedEvent, setSelectedEvent] = useState<EventType | null>(null);
@@ -148,6 +151,27 @@ const PublicBookingPage: React.FC = () => {
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Save booking to main bookings system
+    if (selectedEvent && selectedDate && selectedTime) {
+      createBooking({
+        eventType: selectedEvent.name,
+        attendee: {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone
+        },
+        date: selectedDate.toISOString().split('T')[0],
+        time: selectedTime,
+        duration: `${selectedEvent.duration} min`,
+        status: 'confirmed',
+        location: 'To be determined',
+        notes: formData.message
+      });
+      
+      toast.success('Booking confirmed! Your appointment has been scheduled.');
+    }
+    
     setStep('confirmation');
   };
 

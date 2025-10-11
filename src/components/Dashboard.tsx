@@ -15,7 +15,11 @@ const Dashboard: React.FC = () => {
             <Plus className="h-4 w-4 mr-2" />
             New Event Type
           </Button>
-          <Button variant="outline" data-action="view-public-booking">
+          <Button 
+            variant="outline" 
+            onClick={() => window.open('/book', '_blank')}
+            data-action="view-public-booking"
+          >
             <ExternalLink className="h-4 w-4 mr-2" />
             View Public Page
           </Button>
@@ -81,7 +85,12 @@ const Dashboard: React.FC = () => {
               <Plus className="h-4 w-4 mr-2" />
               Create New Event Type
             </Button>
-            <Button variant="outline" className="w-full justify-start" data-action="view-public-booking">
+            <Button 
+              variant="outline" 
+              className="w-full justify-start"
+              onClick={() => window.open('/book', '_blank')}
+              data-action="view-public-booking"
+            >
               <ExternalLink className="h-4 w-4 mr-2" />
               View Public Booking Page
             </Button>

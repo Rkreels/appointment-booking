@@ -71,6 +71,13 @@ export const useUserTracking = () => {
     lastActive: Date.now()
   });
 
+  // Cleanup old sessions to prevent localStorage quota issues
+  useEffect(() => {
+    if (allSessions.length > 20) {
+      setAllSessions(allSessions.slice(-20)); // Keep only last 20 sessions
+    }
+  }, [allSessions, setAllSessions]);
+
   const [actionStartTime, setActionStartTime] = useState<number>(Date.now());
   const [currentFlow, setCurrentFlow] = useState<string[]>([]);
 
@@ -144,9 +151,14 @@ export const useUserTracking = () => {
     // Update current flow
     setCurrentFlow(prev => [...prev, action].slice(-10)); // Keep last 10 actions
     
+    // Limit actions per session to prevent quota issues
+    const actions = currentSession.actions.length > 100 
+      ? [...currentSession.actions.slice(-100), newAction]
+      : [...currentSession.actions, newAction];
+    
     const updatedSession: UserSession = {
       ...currentSession,
-      actions: [...currentSession.actions, newAction],
+      actions,
       totalActions: currentSession.totalActions + 1,
       correctActions: currentSession.correctActions + (isCorrect ? 1 : 0),
       helpRequests: currentSession.helpRequests + (helpUsed ? 1 : 0)
@@ -157,9 +169,6 @@ export const useUserTracking = () => {
     
     setCurrentSession(updatedSession);
     setActionStartTime(now);
-    
-    // Store for external dashboard access
-    localStorage.setItem('latestUserAction', JSON.stringify(newAction));
     
   }, [currentSession, actionStartTime, currentFlow, startSession, setCurrentSession]);
 
@@ -322,14 +331,25 @@ export const useUserTracking = () => {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [currentSession, startSession, endSession]);
 
-  // Export data for external dashboard
+  // Export data for external dashboard (compact version to prevent quota issues)
   const exportAnalyticsData = () => {
     return {
-      currentSession,
-      allSessions: allSessions.slice(-50), // Last 50 sessions
+      currentSession: currentSession ? {
+        id: currentSession.id,
+        startTime: currentSession.startTime,
+        totalActions: currentSession.totalActions,
+        correctActions: currentSession.correctActions,
+        efficiency: currentSession.efficiency,
+        completedTasks: currentSession.completedTasks
+      } : null,
+      recentSessions: allSessions.slice(-5).map(s => ({ // Only last 5 sessions
+        id: s.id,
+        duration: s.endTime ? s.endTime - s.startTime : 0,
+        efficiency: s.efficiency,
+        completedTasks: s.completedTasks
+      })),
       analytics,
       realtimeMetrics: {
-        currentActionFlow: currentFlow,
         sessionProgress: currentSession?.actions.length || 0,
         lastActionTime: actionStartTime
       }
