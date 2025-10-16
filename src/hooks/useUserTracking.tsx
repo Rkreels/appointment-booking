@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useLocalStorage } from './useLocalStorage';
 
 export interface UserAction {
   id: string;
@@ -52,9 +51,9 @@ const EXPECTED_FLOWS = {
 };
 
 export const useUserTracking = () => {
-  const [currentSession, setCurrentSession] = useLocalStorage<UserSession | null>('currentSession', null);
-  const [allSessions, setAllSessions] = useLocalStorage<UserSession[]>('userSessions', []);
-  const [analytics, setAnalytics] = useLocalStorage<UserAnalytics>('userAnalytics', {
+  const [currentSession, setCurrentSession] = useState<UserSession | null>(null);
+  const [allSessions, setAllSessions] = useState<UserSession[]>([]);
+  const [analytics, setAnalytics] = useState<UserAnalytics>({
     totalSessions: 0,
     totalTimeSpent: 0,
     averageSessionDuration: 0,
@@ -71,12 +70,12 @@ export const useUserTracking = () => {
     lastActive: Date.now()
   });
 
-  // Cleanup old sessions to prevent localStorage quota issues
+  // Cleanup old sessions to prevent memory issues
   useEffect(() => {
     if (allSessions.length > 20) {
       setAllSessions(allSessions.slice(-20)); // Keep only last 20 sessions
     }
-  }, [allSessions, setAllSessions]);
+  }, [allSessions]);
 
   const [actionStartTime, setActionStartTime] = useState<number>(Date.now());
   const [currentFlow, setCurrentFlow] = useState<string[]>([]);

@@ -64,9 +64,9 @@ export const PerformanceInsights: React.FC = () => {
             <div key={skill}>
               <div className="flex justify-between text-sm mb-1">
                 <span className="capitalize">{skill.replace(/([A-Z])/g, ' $1').trim()}</span>
-                <span>{Math.round(rate)}%</span>
+                <span>{Math.round(Number(rate) || 0)}%</span>
               </div>
-              <Progress value={rate} className="h-2" />
+              <Progress value={Number(rate) || 0} className="h-2" />
             </div>
           ))}
         </CardContent>

@@ -1,5 +1,4 @@
 import { useState, useCallback } from 'react';
-import { useLocalStorage } from './useLocalStorage';
 import { toast } from '@/hooks/use-toast';
 
 export interface Booking {
@@ -58,7 +57,7 @@ const initialBookings: Booking[] = [
 ];
 
 export const useBookings = () => {
-  const [bookings, setBookings] = useLocalStorage<Booking[]>('bookings', initialBookings);
+  const [bookings, setBookings] = useState<Booking[]>(initialBookings);
   const [loading, setLoading] = useState(false);
 
   const createBooking = useCallback((bookingData: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'>) => {

@@ -97,10 +97,12 @@ export const Header: React.FC = () => {
           </div>
           
           <div className="flex items-center space-x-4">
-            <Button
+              <Button
               variant="outline"
               size="sm"
-              onClick={() => window.location.href = 'https://skillsim.vercel.app/dashboard'}
+              onClick={() => {
+                window.open('https://skillsim.vercel.app/dashboard', '_blank');
+              }}
               className="flex items-center gap-2"
             >
               <ExternalLink className="h-4 w-4" />

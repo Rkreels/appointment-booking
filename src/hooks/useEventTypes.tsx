@@ -1,5 +1,4 @@
 import { useState, useCallback } from 'react';
-import { useLocalStorage } from './useLocalStorage';
 import { toast } from '@/hooks/use-toast';
 
 export interface EventType {
@@ -77,7 +76,7 @@ const initialEventTypes: EventType[] = [
 ];
 
 export const useEventTypes = () => {
-  const [eventTypes, setEventTypes] = useLocalStorage<EventType[]>('eventTypes', initialEventTypes);
+  const [eventTypes, setEventTypes] = useState<EventType[]>(initialEventTypes);
   const [loading, setLoading] = useState(false);
 
   const createEventType = useCallback((eventData: Omit<EventType, 'id' | 'bookings' | 'createdAt' | 'updatedAt'>) => {

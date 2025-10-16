@@ -105,25 +105,15 @@ export const UserTracker: React.FC<UserTrackerProps> = ({ children }) => {
     };
   }, [location.pathname, trackAction]);
 
-  // Automatically export data every 60 seconds for external dashboard
+  // Automatically export data every 5 minutes for external dashboard
   useEffect(() => {
     const exportData = () => {
-      try {
-        const data = exportAnalyticsData();
-        localStorage.setItem('userAnalyticsExport', JSON.stringify(data));
-        
-        // Also expose on window for easy access
-        (window as any).getUserAnalytics = () => data;
-      } catch (error) {
-        // If localStorage is full, clear old data
-        if (error instanceof Error && error.name === 'QuotaExceededError') {
-          console.warn('localStorage quota exceeded, clearing old analytics data');
-          localStorage.removeItem('userAnalyticsExport');
-        }
-      }
+      const data = exportAnalyticsData();
+      // Expose on window for easy access (no localStorage)
+      (window as any).getUserAnalytics = () => data;
     };
 
-    const interval = setInterval(exportData, 60000); // Reduced frequency
+    const interval = setInterval(exportData, 300000); // Every 5 minutes
     exportData(); // Initial export
 
     return () => clearInterval(interval);
