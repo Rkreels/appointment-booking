@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
-import { useBookings } from '@/hooks/useBookings';
+import { useBookings } from '@/contexts/BookingContext';
 import { toast } from 'sonner';
 
 interface EventType {

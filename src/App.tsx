@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./hooks/useAuth";
+import { BookingProvider } from "./contexts/BookingContext";
 import VoiceTrainer from "./components/VoiceTrainer";
 import { VolumeControl } from "@/components/VolumeControl";
 import { UserTracker } from "@/components/UserTracker";
@@ -32,26 +33,28 @@ const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <BrowserRouter>
-            <UserTracker>
-              <VoiceTrainer />
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/calendar" element={<Calendar />} />
-                <Route path="/events" element={<EventTypes />} />
-                <Route path="/bookings" element={<Bookings />} />
-                <Route path="/analytics" element={<Analytics />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/book" element={<PublicBookingPage />} />
-                <Route path="/book/:eventId" element={<PublicBookingPage />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-              <VolumeControl onVolumeToggle={handleVolumeToggle} />
-            </UserTracker>
-          </BrowserRouter>
-        </TooltipProvider>
+        <BookingProvider>
+          <TooltipProvider>
+            <Toaster />
+            <BrowserRouter>
+              <UserTracker>
+                <VoiceTrainer />
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/calendar" element={<Calendar />} />
+                  <Route path="/events" element={<EventTypes />} />
+                  <Route path="/bookings" element={<Bookings />} />
+                  <Route path="/analytics" element={<Analytics />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/book" element={<PublicBookingPage />} />
+                  <Route path="/book/:eventId" element={<PublicBookingPage />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+                <VolumeControl onVolumeToggle={handleVolumeToggle} />
+              </UserTracker>
+            </BrowserRouter>
+          </TooltipProvider>
+        </BookingProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
