@@ -4,11 +4,40 @@ import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Clock, MapPin, Use
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+
+const today = new Date();
+const addDays = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+
+const generateDemoEvents = () => {
+  const events = [
+    { id: 1, title: '30-min Consultation', time: '09:00 AM', duration: '30 min', attendee: 'John Doe', type: 'Meeting', location: 'Zoom', date: today, description: 'Initial consultation meeting' },
+    { id: 2, title: 'Team Sync', time: '02:00 PM', duration: '45 min', attendee: 'Sarah Wilson', type: 'Group Meeting', location: 'Conference Room A', date: today, description: 'Weekly team synchronization' },
+    { id: 3, title: 'Product Demo', time: '10:30 AM', duration: '30 min', attendee: 'Emily Davis', type: 'Demo', location: 'Google Meet', date: today, description: 'Product walkthrough' },
+    { id: 4, title: 'Code Review', time: '03:00 PM', duration: '45 min', attendee: 'Mike Chen', type: 'Technical', location: 'Zoom', date: addDays(today, 1), description: 'Sprint code review' },
+    { id: 5, title: 'Client Onboarding', time: '11:00 AM', duration: '60 min', attendee: 'Anna Brooks', type: 'Onboarding', location: 'In Person', date: addDays(today, 1), description: 'New client setup' },
+    { id: 6, title: 'Sprint Planning', time: '09:30 AM', duration: '60 min', attendee: 'David Kim', type: 'Planning', location: 'Conference Room A', date: addDays(today, 2), description: 'Next sprint planning' },
+    { id: 7, title: 'Design Review', time: '01:00 PM', duration: '30 min', attendee: 'Rachel Green', type: 'Review', location: 'Zoom', date: addDays(today, 2), description: 'UI/UX review session' },
+    { id: 8, title: 'Sales Call', time: '04:00 PM', duration: '30 min', attendee: 'Tom Harris', type: 'Sales', location: 'Phone Call', date: addDays(today, 3), description: 'Discovery call' },
+    { id: 9, title: 'Strategy Session', time: '10:00 AM', duration: '60 min', attendee: 'Lisa Wang', type: 'Strategy', location: 'Google Meet', date: addDays(today, 3), description: 'Q2 strategy discussion' },
+    { id: 10, title: 'Investor Meeting', time: '02:00 PM', duration: '45 min', attendee: 'James Martinez', type: 'Meeting', location: 'In Person', date: addDays(today, 4), description: 'Series A discussion' },
+    { id: 11, title: 'HR Check-in', time: '09:00 AM', duration: '15 min', attendee: 'Olivia Taylor', type: 'HR', location: 'Phone Call', date: addDays(today, 4), description: 'Monthly check-in' },
+    { id: 12, title: 'Workshop', time: '01:30 PM', duration: '90 min', attendee: 'Chris Anderson', type: 'Training', location: 'Conference Room A', date: addDays(today, 5), description: 'React advanced patterns' },
+    { id: 13, title: 'Mentorship', time: '11:00 AM', duration: '45 min', attendee: 'Nina Patel', type: 'Mentorship', location: 'Zoom', date: addDays(today, 5), description: 'Career guidance session' },
+    { id: 14, title: 'Board Meeting', time: '10:00 AM', duration: '120 min', attendee: 'Robert Lee', type: 'Board', location: 'In Person', date: addDays(today, 6), description: 'Quarterly board meeting' },
+    { id: 15, title: 'User Interview', time: '03:30 PM', duration: '45 min', attendee: 'Sophie Turner', type: 'Research', location: 'Google Meet', date: addDays(today, 6), description: 'User research interview' },
+    { id: 16, title: 'Performance Review', time: '09:00 AM', duration: '30 min', attendee: 'Daniel White', type: 'HR', location: 'Microsoft Teams', date: addDays(today, 7), description: 'Q1 performance review' },
+    { id: 17, title: 'Training Session', time: '02:00 PM', duration: '90 min', attendee: 'Grace Nguyen', type: 'Training', location: 'In Person', date: addDays(today, 7), description: 'Onboarding training' },
+    { id: 18, title: 'Quick Standup', time: '08:45 AM', duration: '15 min', attendee: 'Kevin Brown', type: 'Standup', location: 'Zoom', date: today, description: 'Morning standup' },
+    { id: 19, title: 'Partnership Call', time: '04:30 PM', duration: '30 min', attendee: 'Amanda Clark', type: 'Partnership', location: 'Phone Call', date: addDays(today, 8), description: 'Partnership exploration' },
+    { id: 20, title: 'Technical Planning', time: '11:30 AM', duration: '60 min', attendee: 'Brian Scott', type: 'Technical', location: 'Google Meet', date: addDays(today, 9), description: 'Architecture planning' },
+  ];
+  return events;
+};
 
 const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -16,31 +45,7 @@ const Calendar = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
   const { toast } = useToast();
-
-  const [events, setEvents] = useState([
-    {
-      id: 1,
-      title: '30-min Consultation',
-      time: '09:00 AM',
-      duration: '30 min',
-      attendee: 'John Doe',
-      type: 'Meeting',
-      location: 'Zoom',
-      date: new Date(),
-      description: 'Initial consultation meeting'
-    },
-    {
-      id: 2,
-      title: 'Team Sync',
-      time: '02:00 PM',
-      duration: '45 min',
-      attendee: 'Sarah Wilson',
-      type: 'Group Meeting',
-      location: 'Conference Room A',
-      date: new Date(),
-      description: 'Weekly team synchronization'
-    }
-  ]);
+  const [events, setEvents] = useState(generateDemoEvents);
 
   const navigateMonth = (direction: 'prev' | 'next') => {
     const newDate = new Date(currentDate);
@@ -55,26 +60,28 @@ const Calendar = () => {
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
     const startingDayOfWeek = firstDay.getDay();
-
-    const days = [];
-    
-    for (let i = 0; i < startingDayOfWeek; i++) {
-      days.push(null);
-    }
-    
-    for (let day = 1; day <= daysInMonth; day++) {
-      days.push(day);
-    }
-    
+    const days: (number | null)[] = [];
+    for (let i = 0; i < startingDayOfWeek; i++) days.push(null);
+    for (let day = 1; day <= daysInMonth; day++) days.push(day);
     return days;
   };
 
   const getEventsForDate = (day: number) => {
     return events.filter(event => {
       const eventDate = new Date(event.date);
-      return eventDate.getDate() === day && 
+      return eventDate.getDate() === day &&
              eventDate.getMonth() === currentDate.getMonth() &&
              eventDate.getFullYear() === currentDate.getFullYear();
+    });
+  };
+
+  const getTodayEvents = () => {
+    const now = new Date();
+    return events.filter(event => {
+      const eventDate = new Date(event.date);
+      return eventDate.getDate() === now.getDate() &&
+             eventDate.getMonth() === now.getMonth() &&
+             eventDate.getFullYear() === now.getFullYear();
     });
   };
 
@@ -92,11 +99,17 @@ const Calendar = () => {
     };
     setEvents([...events, newEvent]);
     setIsEventDialogOpen(false);
-    toast({
-      title: "Event Added",
-      description: `${eventData.title} has been added to your calendar.`,
-    });
+    toast({ title: "Event Added", description: `${eventData.title} has been added to your calendar.` });
   };
+
+  const todayEvents = getTodayEvents();
+  const thisWeekCount = events.filter(e => {
+    const d = new Date(e.date);
+    const now = new Date();
+    const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay());
+    const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 7);
+    return d >= weekStart && d < weekEnd;
+  }).length;
 
   return (
     <Layout>
@@ -109,34 +122,10 @@ const Calendar = () => {
               <p className="text-gray-600">Manage your scheduled events</p>
             </div>
           </div>
-          
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
-            <div className="flex items-center space-x-2">
-              <Button
-                variant={viewMode === 'month' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('month')}
-                data-action="calendar-month-view"
-              >
-                Month
-              </Button>
-              <Button
-                variant={viewMode === 'week' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('week')}
-                data-action="calendar-week-view"
-              >
-                Week
-              </Button>
-              <Button
-                variant={viewMode === 'day' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('day')}
-                data-action="calendar-day-view"
-              >
-                Day
-              </Button>
-            </div>
+          <div className="flex items-center space-x-2">
+            <Button variant={viewMode === 'month' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('month')}>Month</Button>
+            <Button variant={viewMode === 'week' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('week')}>Week</Button>
+            <Button variant={viewMode === 'day' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('day')}>Day</Button>
           </div>
         </div>
 
@@ -149,73 +138,41 @@ const Calendar = () => {
                     {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                   </CardTitle>
                   <div className="flex items-center space-x-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => navigateMonth('prev')}
-                      data-action="calendar-prev-month"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => setCurrentDate(new Date())}
-                      data-action="calendar-today"
-                    >
-                      Today
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => navigateMonth('next')}
-                      data-action="calendar-next-month"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => navigateMonth('prev')}><ChevronLeft className="h-4 w-4" /></Button>
+                    <Button variant="outline" size="sm" onClick={() => setCurrentDate(new Date())}>Today</Button>
+                    <Button variant="outline" size="sm" onClick={() => navigateMonth('next')}><ChevronRight className="h-4 w-4" /></Button>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-7 gap-1 mb-4">
                   {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                    <div key={day} className="p-2 text-center font-medium text-gray-500 text-sm">
-                      {day}
-                    </div>
+                    <div key={day} className="p-2 text-center font-medium text-gray-500 text-sm">{day}</div>
                   ))}
                 </div>
                 <div className="grid grid-cols-7 gap-1">
                   {getDaysInMonth().map((day, index) => {
                     const dayEvents = day ? getEventsForDate(day) : [];
-                    const isToday = day === new Date().getDate() && 
+                    const isToday = day === new Date().getDate() &&
                       currentDate.getMonth() === new Date().getMonth() &&
                       currentDate.getFullYear() === new Date().getFullYear();
-                    
                     return (
-                      <div
-                        key={index}
+                      <div key={index}
                         className={`p-2 sm:p-3 text-center border rounded cursor-pointer hover:bg-gray-50 min-h-[60px] sm:min-h-[80px] ${
                           isToday ? 'bg-blue-100 border-blue-300' : 'border-gray-200'
                         }`}
                         onClick={() => day && handleDateClick(day)}
-                        data-action="calendar-select-date"
                       >
                         {day && (
                           <div className="h-full flex flex-col">
                             <span className="text-xs sm:text-sm font-medium">{day}</span>
                             <div className="flex-1 mt-1 space-y-1">
                               {dayEvents.slice(0, 2).map((event, idx) => (
-                                <div
-                                  key={idx}
-                                  className="w-full h-1 sm:h-2 bg-blue-600 rounded text-xs text-white overflow-hidden"
-                                  title={event.title}
-                                >
+                                <div key={idx} className="w-full h-1 sm:h-2 bg-blue-600 rounded text-xs text-white overflow-hidden" title={event.title}>
                                   <span className="hidden sm:inline text-xs px-1">{event.title.substring(0, 8)}</span>
                                 </div>
                               ))}
-                              {dayEvents.length > 2 && (
-                                <div className="text-xs text-gray-500">+{dayEvents.length - 2} more</div>
-                              )}
+                              {dayEvents.length > 2 && <div className="text-xs text-gray-500">+{dayEvents.length - 2} more</div>}
                             </div>
                           </div>
                         )}
@@ -231,34 +188,30 @@ const Calendar = () => {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-lg">Today's Events</CardTitle>
-                <Button 
-                  size="sm" 
-                  onClick={() => setIsEventDialogOpen(true)}
-                  data-action="add-calendar-event"
-                >
+                <Button size="sm" onClick={() => { setSelectedDate(new Date()); setIsEventDialogOpen(true); }}>
                   <Plus className="h-4 w-4" />
                 </Button>
               </CardHeader>
               <CardContent className="space-y-4">
-                {events.length === 0 ? (
+                {todayEvents.length === 0 ? (
                   <p className="text-gray-500 text-sm">No events scheduled for today</p>
                 ) : (
-                  events.map((event) => (
+                  todayEvents.map((event) => (
                     <div key={event.id} className="p-3 border rounded-lg">
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
                           <h4 className="font-medium text-gray-900 truncate">{event.title}</h4>
                           <div className="mt-1 space-y-1">
                             <div className="flex items-center text-sm text-gray-600">
-                              <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
+                              <Clock className="h-3 w-3 mr-1 flex-shrink-0" />
                               <span className="truncate">{event.time} ({event.duration})</span>
                             </div>
                             <div className="flex items-center text-sm text-gray-600">
-                              <User className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
+                              <User className="h-3 w-3 mr-1 flex-shrink-0" />
                               <span className="truncate">{event.attendee}</span>
                             </div>
                             <div className="flex items-center text-sm text-gray-600">
-                              <MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
+                              <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
                               <span className="truncate">{event.location}</span>
                             </div>
                           </div>
@@ -278,15 +231,15 @@ const Calendar = () => {
               <CardContent className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Today's Meetings</span>
-                  <span className="font-medium">{events.length}</span>
+                  <span className="font-medium">{todayEvents.length}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">This Week</span>
-                  <span className="font-medium">12</span>
+                  <span className="font-medium">{thisWeekCount}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">This Month</span>
-                  <span className="font-medium">45</span>
+                  <span className="text-sm text-gray-600">Total Events</span>
+                  <span className="font-medium">{events.length}</span>
                 </div>
               </CardContent>
             </Card>
@@ -342,9 +295,7 @@ const Calendar = () => {
                 <Textarea id="description" name="description" />
               </div>
               <div className="flex justify-end space-x-2">
-                <Button type="button" variant="outline" onClick={() => setIsEventDialogOpen(false)}>
-                  Cancel
-                </Button>
+                <Button type="button" variant="outline" onClick={() => setIsEventDialogOpen(false)}>Cancel</Button>
                 <Button type="submit">Add Event</Button>
               </div>
             </form>

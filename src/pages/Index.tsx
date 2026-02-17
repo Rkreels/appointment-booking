@@ -1,13 +1,23 @@
-
 import React from 'react';
 import { Layout } from '../components/Layout';
 import { Calendar, Clock, Users, TrendingUp, Plus, ExternalLink } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useBookings } from '@/contexts/BookingContext';
 
 const Index = () => {
+  const navigate = useNavigate();
+  const { bookings, getBookingStats } = useBookings();
+  const stats = getBookingStats();
+
+  const todayBookings = bookings.filter(b => b.date === new Date().toISOString().split('T')[0]);
+  const upcomingBookings = bookings
+    .filter(b => new Date(b.date) >= new Date() && b.status !== 'cancelled')
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .slice(0, 3);
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -16,163 +26,129 @@ const Index = () => {
             <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
             <p className="text-gray-600">Welcome back! Here's what's happening.</p>
           </div>
-          
           <div className="flex flex-col sm:flex-row gap-2">
-            <Button 
-              onClick={() => window.open('/book', '_blank')}
-              data-action="view-public-booking"
-            >
-              <ExternalLink className="h-4 w-4 mr-2" />
-              View Public Booking Page
+            <Button onClick={() => window.open('/book', '_blank')}>
+              <ExternalLink className="h-4 w-4 mr-2" />View Public Booking Page
             </Button>
-            <Button asChild data-action="create-new-event">
-              <Link to="/events" className="flex items-center space-x-2">
-                <Plus className="h-4 w-4" />
-                <span>New Event Type</span>
-              </Link>
+            <Button variant="outline" onClick={() => navigate('/events')}>
+              <Plus className="h-4 w-4 mr-2" />New Event Type
             </Button>
           </div>
         </div>
 
-        {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card data-action="view-today-bookings">
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/bookings')}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Today's Bookings</CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">12</div>
-              <p className="text-xs text-muted-foreground">+2 from yesterday</p>
+              <div className="text-2xl font-bold">{stats.today}</div>
+              <p className="text-xs text-muted-foreground">{stats.total} total bookings</p>
             </CardContent>
           </Card>
-
-          <Card data-action="view-this-week">
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/bookings')}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">This Week</CardTitle>
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">45</div>
-              <p className="text-xs text-muted-foreground">+12% from last week</p>
+              <div className="text-2xl font-bold">{stats.thisWeek}</div>
+              <p className="text-xs text-muted-foreground">{stats.pending} pending</p>
             </CardContent>
           </Card>
-
-          <Card data-action="view-total-clients">
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/bookings')}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Clients</CardTitle>
+              <CardTitle className="text-sm font-medium">Confirmed</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">234</div>
-              <p className="text-xs text-muted-foreground">+18 new this month</p>
+              <div className="text-2xl font-bold">{stats.confirmed}</div>
+              <p className="text-xs text-muted-foreground">{stats.completed} completed</p>
             </CardContent>
           </Card>
-
-          <Card data-action="view-revenue">
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/analytics')}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Revenue</CardTitle>
+              <CardTitle className="text-sm font-medium">This Month</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">$12,450</div>
-              <p className="text-xs text-muted-foreground">+8% from last month</p>
+              <div className="text-2xl font-bold">{stats.thisMonth}</div>
+              <p className="text-xs text-muted-foreground">{stats.cancelled} cancelled</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Recent Activity & Upcoming Events */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>Upcoming Events Today</CardTitle>
+              <CardTitle>Upcoming Bookings</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg" data-action="view-upcoming-event">
-                <div>
-                  <h4 className="font-medium">30-min Consultation with John Doe</h4>
-                  <p className="text-sm text-gray-600">2:00 PM - 2:30 PM</p>
-                </div>
-                <Badge>Upcoming</Badge>
-              </div>
-              
-              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg" data-action="view-upcoming-event">
-                <div>
-                  <h4 className="font-medium">Team Sync Meeting</h4>
-                  <p className="text-sm text-gray-600">4:00 PM - 4:45 PM</p>
-                </div>
-                <Badge variant="secondary">Confirmed</Badge>
-              </div>
-              
-              <Button variant="outline" className="w-full" asChild data-action="view-all-events">
-                <Link to="/calendar">View All Events</Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Bookings</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-3 border rounded-lg" data-action="view-recent-booking">
-                <div>
-                  <h4 className="font-medium">Sarah Johnson</h4>
-                  <p className="text-sm text-gray-600">60-min Strategy Session</p>
-                  <p className="text-xs text-gray-500">Tomorrow at 10:00 AM</p>
-                </div>
-                <Badge>New</Badge>
-              </div>
-              
-              <div className="flex items-center justify-between p-3 border rounded-lg" data-action="view-recent-booking">
-                <div>
-                  <h4 className="font-medium">Mike Chen</h4>
-                  <p className="text-sm text-gray-600">15-min Quick Chat</p>
-                  <p className="text-xs text-gray-500">Dec 15 at 3:30 PM</p>
-                </div>
-                <Badge variant="secondary">Confirmed</Badge>
-              </div>
-              
-              <Button variant="outline" className="w-full" asChild data-action="view-all-bookings">
+              {upcomingBookings.length === 0 ? (
+                <p className="text-gray-500 text-sm">No upcoming bookings</p>
+              ) : (
+                upcomingBookings.map((booking) => (
+                  <div key={booking.id} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                    <div>
+                      <h4 className="font-medium">{booking.eventType} with {booking.attendee.name}</h4>
+                      <p className="text-sm text-gray-600">{booking.date} at {booking.time}</p>
+                    </div>
+                    <Badge variant={booking.status === 'confirmed' ? 'default' : 'secondary'}>
+                      {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                    </Badge>
+                  </div>
+                ))
+              )}
+              <Button variant="outline" className="w-full" asChild>
                 <Link to="/bookings">View All Bookings</Link>
               </Button>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Today's Schedule</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {todayBookings.length === 0 ? (
+                <p className="text-gray-500 text-sm">No bookings for today</p>
+              ) : (
+                todayBookings.slice(0, 3).map((booking) => (
+                  <div key={booking.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <h4 className="font-medium">{booking.attendee.name}</h4>
+                      <p className="text-sm text-gray-600">{booking.eventType}</p>
+                      <p className="text-xs text-gray-500">{booking.time} • {booking.location}</p>
+                    </div>
+                    <Badge variant="secondary">{booking.status}</Badge>
+                  </div>
+                ))
+              )}
+              <Button variant="outline" className="w-full" asChild>
+                <Link to="/calendar">View Calendar</Link>
+              </Button>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Quick Actions */}
         <Card>
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Button variant="outline" className="h-20 flex-col space-y-2" asChild data-action="quick-create-event">
-                <Link to="/events">
-                  <Plus className="h-6 w-6" />
-                  <span className="text-sm">New Event Type</span>
-                </Link>
+              <Button variant="outline" className="h-20 flex-col space-y-2" onClick={() => navigate('/events')}>
+                <Plus className="h-6 w-6" /><span className="text-sm">New Event Type</span>
               </Button>
-              
-              <Button variant="outline" className="h-20 flex-col space-y-2" asChild data-action="quick-view-calendar">
-                <Link to="/calendar">
-                  <Calendar className="h-6 w-6" />
-                  <span className="text-sm">View Calendar</span>
-                </Link>
+              <Button variant="outline" className="h-20 flex-col space-y-2" onClick={() => navigate('/calendar')}>
+                <Calendar className="h-6 w-6" /><span className="text-sm">View Calendar</span>
               </Button>
-              
-              <Button variant="outline" className="h-20 flex-col space-y-2" asChild data-action="quick-view-analytics">
-                <Link to="/analytics">
-                  <TrendingUp className="h-6 w-6" />
-                  <span className="text-sm">Analytics</span>
-                </Link>
+              <Button variant="outline" className="h-20 flex-col space-y-2" onClick={() => navigate('/analytics')}>
+                <TrendingUp className="h-6 w-6" /><span className="text-sm">Analytics</span>
               </Button>
-              
-              <Button variant="outline" className="h-20 flex-col space-y-2" asChild data-action="quick-settings">
-                <Link to="/settings">
-                  <Users className="h-6 w-6" />
-                  <span className="text-sm">Settings</span>
-                </Link>
+              <Button variant="outline" className="h-20 flex-col space-y-2" onClick={() => navigate('/settings')}>
+                <Users className="h-6 w-6" /><span className="text-sm">Settings</span>
               </Button>
             </div>
           </CardContent>
