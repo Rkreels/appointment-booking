@@ -19,7 +19,19 @@ import ProtectedRoute from '../components/ProtectedRoute';
 const ProfileSettings = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [firstName, setFirstName] = useState(user?.name.split(' ')[0] || '');
+  const [lastName, setLastName] = useState(user?.name.split(' ')[1] || '');
+  const [email, setEmail] = useState(user?.email || '');
+  const [bio, setBio] = useState('');
   
+  const handleSave = () => {
+    if (!firstName.trim() || !email.trim()) {
+      toast({ title: "Validation Error", description: "First name and email are required.", variant: "destructive" });
+      return;
+    }
+    toast({ title: "Profile Updated", description: "Your profile has been saved successfully." });
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -33,27 +45,22 @@ const ProfileSettings = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="firstName">First Name</Label>
-              <Input id="firstName" defaultValue={user?.name.split(' ')[0]} data-action="edit-first-name" />
+              <Input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="lastName">Last Name</Label>
-              <Input id="lastName" defaultValue={user?.name.split(' ')[1]} data-action="edit-last-name" />
+              <Input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} />
             </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" defaultValue={user?.email} data-action="edit-email" />
+            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="bio">Bio</Label>
-            <Input id="bio" placeholder="Tell people about yourself..." data-action="edit-bio" />
+            <Input id="bio" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Tell people about yourself..." />
           </div>
-          <Button 
-            data-action="save-profile"
-            onClick={() => toast({ title: "Profile Updated", description: "Your profile has been saved successfully." })}
-          >
-            Save Changes
-          </Button>
+          <Button onClick={handleSave}>Save Changes</Button>
         </CardContent>
       </Card>
     </div>
@@ -62,6 +69,9 @@ const ProfileSettings = () => {
 
 const NotificationSettings = () => {
   const { toast } = useToast();
+  const [emailNotif, setEmailNotif] = useState(true);
+  const [smsNotif, setSmsNotif] = useState(false);
+  const [calendarReminders, setCalendarReminders] = useState(true);
   
   return (
     <div className="space-y-6">
@@ -73,26 +83,25 @@ const NotificationSettings = () => {
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <Label>Email Notifications</Label>
-            <p className="text-sm text-gray-500">Receive booking confirmations via email</p>
+            <p className="text-sm text-muted-foreground">Receive booking confirmations via email</p>
           </div>
-          <Switch data-action="toggle-email-notifications" />
+          <Switch checked={emailNotif} onCheckedChange={setEmailNotif} />
         </div>
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <Label>SMS Notifications</Label>
-            <p className="text-sm text-gray-500">Receive booking reminders via SMS</p>
+            <p className="text-sm text-muted-foreground">Receive booking reminders via SMS</p>
           </div>
-          <Switch data-action="toggle-sms-notifications" />
+          <Switch checked={smsNotif} onCheckedChange={setSmsNotif} />
         </div>
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <Label>Calendar Reminders</Label>
-            <p className="text-sm text-gray-500">Send reminders to attendees</p>
+            <p className="text-sm text-muted-foreground">Send reminders to attendees</p>
           </div>
-          <Switch defaultChecked data-action="toggle-calendar-reminders" />
+          <Switch checked={calendarReminders} onCheckedChange={setCalendarReminders} />
         </div>
         <Button 
-          data-action="save-notification-preferences"
           onClick={() => toast({ title: "Preferences Saved", description: "Your notification preferences have been updated." })}
         >
           Save Preferences
@@ -105,7 +114,26 @@ const NotificationSettings = () => {
 
 const SecuritySettings = () => {
   const { toast } = useToast();
-  
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [twoFactor, setTwoFactor] = useState(false);
+
+  const handleUpdateSecurity = () => {
+    if (newPassword && newPassword !== confirmPassword) {
+      toast({ title: "Error", description: "New passwords do not match.", variant: "destructive" });
+      return;
+    }
+    if (newPassword && newPassword.length < 8) {
+      toast({ title: "Error", description: "Password must be at least 8 characters.", variant: "destructive" });
+      return;
+    }
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    toast({ title: "Security Updated", description: "Your security settings have been updated successfully." });
+  };
+
   return (
     <div className="space-y-6">
     <Card>
@@ -115,29 +143,24 @@ const SecuritySettings = () => {
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="currentPassword">Current Password</Label>
-          <Input id="currentPassword" type="password" data-action="edit-current-password" />
+          <Input id="currentPassword" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="newPassword">New Password</Label>
-          <Input id="newPassword" type="password" data-action="edit-new-password" />
+          <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="confirmPassword">Confirm Password</Label>
-          <Input id="confirmPassword" type="password" data-action="edit-confirm-password" />
+          <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
         </div>
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <Label>Two-Factor Authentication</Label>
-            <p className="text-sm text-gray-500">Add an extra layer of security</p>
+            <p className="text-sm text-muted-foreground">Add an extra layer of security</p>
           </div>
-          <Switch data-action="toggle-2fa" />
+          <Switch checked={twoFactor} onCheckedChange={setTwoFactor} />
         </div>
-        <Button 
-          data-action="update-security"
-          onClick={() => toast({ title: "Security Updated", description: "Your security settings have been updated successfully." })}
-        >
-          Update Security
-        </Button>
+        <Button onClick={handleUpdateSecurity}>Update Security</Button>
       </CardContent>
     </Card>
   </div>
@@ -146,7 +169,19 @@ const SecuritySettings = () => {
 
 const AppearanceSettings = () => {
   const { toast } = useToast();
+  const [theme, setTheme] = useState('light');
+  const [brandColor, setBrandColor] = useState('blue');
   
+  const handleThemeChange = (newTheme: string) => {
+    setTheme(newTheme);
+    toast({ title: "Theme Changed", description: `Theme set to ${newTheme}.` });
+  };
+
+  const handleColorChange = (color: string) => {
+    setBrandColor(color);
+    toast({ title: "Brand Color Changed", description: `Brand color set to ${color}.` });
+  };
+
   return (
     <div className="space-y-6">
     <Card>
@@ -157,26 +192,20 @@ const AppearanceSettings = () => {
         <div className="space-y-2">
           <Label>Theme</Label>
           <div className="flex space-x-2">
-            <Button variant="outline" size="sm" data-action="theme-light">Light</Button>
-            <Button variant="outline" size="sm" data-action="theme-dark">Dark</Button>
-            <Button variant="outline" size="sm" data-action="theme-system">System</Button>
+            <Button variant={theme === 'light' ? 'default' : 'outline'} size="sm" onClick={() => handleThemeChange('light')}>Light</Button>
+            <Button variant={theme === 'dark' ? 'default' : 'outline'} size="sm" onClick={() => handleThemeChange('dark')}>Dark</Button>
+            <Button variant={theme === 'system' ? 'default' : 'outline'} size="sm" onClick={() => handleThemeChange('system')}>System</Button>
           </div>
         </div>
         <div className="space-y-2">
           <Label>Brand Color</Label>
           <div className="flex space-x-2">
-            <div className="w-8 h-8 bg-blue-600 rounded cursor-pointer" data-action="color-blue"></div>
-            <div className="w-8 h-8 bg-green-600 rounded cursor-pointer" data-action="color-green"></div>
-            <div className="w-8 h-8 bg-purple-600 rounded cursor-pointer" data-action="color-purple"></div>
-            <div className="w-8 h-8 bg-red-600 rounded cursor-pointer" data-action="color-red"></div>
+            <div className={`w-8 h-8 bg-blue-600 rounded cursor-pointer ring-2 ${brandColor === 'blue' ? 'ring-blue-400' : 'ring-transparent'}`} onClick={() => handleColorChange('blue')}></div>
+            <div className={`w-8 h-8 bg-green-600 rounded cursor-pointer ring-2 ${brandColor === 'green' ? 'ring-green-400' : 'ring-transparent'}`} onClick={() => handleColorChange('green')}></div>
+            <div className={`w-8 h-8 bg-purple-600 rounded cursor-pointer ring-2 ${brandColor === 'purple' ? 'ring-purple-400' : 'ring-transparent'}`} onClick={() => handleColorChange('purple')}></div>
+            <div className={`w-8 h-8 bg-red-600 rounded cursor-pointer ring-2 ${brandColor === 'red' ? 'ring-red-400' : 'ring-transparent'}`} onClick={() => handleColorChange('red')}></div>
           </div>
         </div>
-        <Button 
-          data-action="save-appearance"
-          onClick={() => toast({ title: "Appearance Saved", description: "Your appearance preferences have been saved." })}
-        >
-          Save Appearance
-        </Button>
       </CardContent>
     </Card>
   </div>
@@ -199,28 +228,28 @@ const Settings = () => {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8">
-            <TabsTrigger value="profile" className="flex items-center space-x-2" data-action="profile-settings">
+          <TabsList className="flex flex-wrap gap-1 h-auto p-1">
+            <TabsTrigger value="profile" className="flex items-center space-x-2">
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">Profile</span>
             </TabsTrigger>
-            <TabsTrigger value="availability" className="flex items-center space-x-2" data-action="availability-settings">
+            <TabsTrigger value="availability" className="flex items-center space-x-2">
               <Calendar className="h-4 w-4" />
               <span className="hidden sm:inline">Availability</span>
             </TabsTrigger>
-            <TabsTrigger value="notifications" className="flex items-center space-x-2" data-action="notification-settings">
+            <TabsTrigger value="notifications" className="flex items-center space-x-2">
               <Bell className="h-4 w-4" />
               <span className="hidden sm:inline">Notifications</span>
             </TabsTrigger>
-            <TabsTrigger value="integrations" className="flex items-center space-x-2" data-action="integration-settings">
+            <TabsTrigger value="integrations" className="flex items-center space-x-2">
               <Zap className="h-4 w-4" />
               <span className="hidden sm:inline">Integrations</span>
             </TabsTrigger>
-            <TabsTrigger value="security" className="flex items-center space-x-2" data-action="security-settings">
+            <TabsTrigger value="security" className="flex items-center space-x-2">
               <Shield className="h-4 w-4" />
               <span className="hidden sm:inline">Security</span>
             </TabsTrigger>
-            <TabsTrigger value="appearance" className="flex items-center space-x-2" data-action="appearance-settings">
+            <TabsTrigger value="appearance" className="flex items-center space-x-2">
               <Palette className="h-4 w-4" />
               <span className="hidden sm:inline">Appearance</span>
             </TabsTrigger>

@@ -148,7 +148,7 @@ const EventTypes: React.FC = () => {
                       variant="outline" 
                       size="sm" 
                       title="Settings"
-                      onClick={() => toast({ title: "Event Settings", description: "Advanced event settings coming soon." })}
+                      onClick={() => handleEditEvent(eventType)}
                     >
                       <Settings className="h-4 w-4" />
                     </Button>

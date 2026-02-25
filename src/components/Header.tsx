@@ -101,12 +101,12 @@ export const Header: React.FC = () => {
               variant="outline"
               size="sm"
               onClick={() => {
-                window.open('https://skillsim.vercel.app/dashboard', '_blank');
+                window.location.href = 'https://careertodo.com/practice-lab';
               }}
               className="flex items-center gap-2"
             >
               <ExternalLink className="h-4 w-4" />
-              Master Dashboard
+              Lab Dashboard
             </Button>
             
             <DropdownMenu>
