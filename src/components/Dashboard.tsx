@@ -3,15 +3,27 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar, Clock, Users, TrendingUp, Plus, ExternalLink } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { useNavigate, Link } from 'react-router-dom';
+import { useBookings } from '@/contexts/BookingContext';
 import BookingLinkShare from './BookingLinkShare';
 
 const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
+  const { bookings, getBookingStats } = useBookings();
+  const stats = getBookingStats();
+
+  const upcomingBookings = bookings
+    .filter(b => new Date(b.date) >= new Date() && b.status !== 'cancelled')
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .slice(0, 5);
+
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <div className="flex space-x-3">
-          <Button data-action="create-new-event">
+    <div className="p-4 sm:p-6 space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h1 className="text-2xl sm:text-3xl font-bold">Dashboard</h1>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Button data-action="create-new-event" onClick={() => navigate('/events')}>
             <Plus className="h-4 w-4 mr-2" />
             New Event Type
           </Button>
@@ -27,48 +39,48 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/bookings')}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Total Bookings</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">127</div>
-            <p className="text-xs text-muted-foreground">+12% from last month</p>
+            <div className="text-xl sm:text-2xl font-bold">{stats.total}</div>
+            <p className="text-xs text-muted-foreground">{stats.confirmed} confirmed</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/bookings')}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Hours Booked</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">This Week</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">89.5</div>
-            <p className="text-xs text-muted-foreground">+8% from last month</p>
+            <div className="text-xl sm:text-2xl font-bold">{stats.thisWeek}</div>
+            <p className="text-xs text-muted-foreground">{stats.pending} pending</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/bookings')}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Clients</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Active Clients</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">48</div>
-            <p className="text-xs text-muted-foreground">+5% from last month</p>
+            <div className="text-xl sm:text-2xl font-bold">{stats.confirmed + stats.pending}</div>
+            <p className="text-xs text-muted-foreground">{stats.completed} completed</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/analytics')}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Revenue</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">This Month</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$12,450</div>
-            <p className="text-xs text-muted-foreground">+18% from last month</p>
+            <div className="text-xl sm:text-2xl font-bold">{stats.thisMonth}</div>
+            <p className="text-xs text-muted-foreground">{stats.cancelled} cancelled</p>
           </CardContent>
         </Card>
       </div>
@@ -81,7 +93,7 @@ const Dashboard: React.FC = () => {
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button className="w-full justify-start" data-action="create-new-event">
+            <Button className="w-full justify-start" onClick={() => navigate('/events')} data-action="create-new-event">
               <Plus className="h-4 w-4 mr-2" />
               Create New Event Type
             </Button>
@@ -94,7 +106,7 @@ const Dashboard: React.FC = () => {
               <ExternalLink className="h-4 w-4 mr-2" />
               View Public Booking Page
             </Button>
-            <Button variant="outline" className="w-full justify-start" data-action="calendar">
+            <Button variant="outline" className="w-full justify-start" onClick={() => navigate('/calendar')} data-action="calendar">
               <Calendar className="h-4 w-4 mr-2" />
               View Calendar
             </Button>
@@ -107,33 +119,32 @@ const Dashboard: React.FC = () => {
 
       {/* Recent Activity */}
       <Card>
-        <CardHeader>
-          <CardTitle>Recent Bookings</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Upcoming Bookings</CardTitle>
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/bookings">View All</Link>
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {[
-              { name: 'Sarah Johnson', event: '30-min Consultation', time: 'Today, 2:00 PM', status: 'confirmed' },
-              { name: 'Mike Chen', event: 'Team Sync Meeting', time: 'Tomorrow, 10:00 AM', status: 'pending' },
-              { name: 'Emily Davis', event: '15-min Quick Chat', time: 'Dec 13, 3:30 PM', status: 'confirmed' },
-            ].map((booking, index) => (
-              <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                <div>
-                  <p className="font-medium">{booking.name}</p>
-                  <p className="text-sm text-gray-600">{booking.event}</p>
+            {upcomingBookings.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">No upcoming bookings</p>
+            ) : (
+              upcomingBookings.map((booking) => (
+                <div key={booking.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg gap-2">
+                  <div>
+                    <p className="font-medium">{booking.attendee.name}</p>
+                    <p className="text-sm text-muted-foreground">{booking.eventType}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">{booking.date} {booking.time}</span>
+                    <Badge variant={booking.status === 'confirmed' ? 'default' : 'secondary'}>
+                      {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                    </Badge>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm">{booking.time}</p>
-                  <span className={`text-xs px-2 py-1 rounded-full ${
-                    booking.status === 'confirmed' 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {booking.status}
-                  </span>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </CardContent>
       </Card>
